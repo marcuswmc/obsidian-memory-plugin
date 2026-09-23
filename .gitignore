@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.DS_Store
+
+# Memória local do Claude sobre este repositório (histórico pessoal; não publicar)
+.obsidian-vault/

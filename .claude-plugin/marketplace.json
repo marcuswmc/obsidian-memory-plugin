@@ -1,0 +1,17 @@
+{
+  "name": "obsidian-memory",
+  "owner": {
+    "name": "Marcus Silva"
+  },
+  "metadata": {
+    "description": "Marketplace do plugin Obsidian Memory"
+  },
+  "plugins": [
+    {
+      "name": "obsidian-memory",
+      "source": "./",
+      "description": "Memória persistente por projeto para o Claude Code: um vault Obsidian (.obsidian-vault/) com CLAUDE.md de contexto, histórico de sessões, specs, planos, decisões e commits automáticos do vault.",
+      "version": "1.1.0"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Cross-platform launcher for vault.py (macOS, Linux, Windows via Git Bash).
+# Finds a Python >= 3.8 among python3 / python / py -3 (skipping the Windows Store stub).
+DIR="${0%[/\\]*}"
+[ "$DIR" = "$0" ] && DIR="."
+
+for cand in python3 python "py -3"; do
+  if $cand -c 'import sys; sys.exit(0 if sys.version_info >= (3, 8) else 1)' >/dev/null 2>&1; then
+    exec $cand "$DIR/vault.py" "$@"
+  fi
+done
+
+# No usable Python: explain how to install it, without failing hooks.
+case "$(uname -s 2>/dev/null)" in
+  Darwin) how="xcode-select --install   (ou: brew install python)" ;;
+  MINGW*|MSYS*|CYGWIN*) how="winget install --id Python.Python.3.12 -e   (ou https://www.python.org/downloads/)" ;;
+  *) how="sudo apt install python3   (ou dnf/pacman equivalente)" ;;
+esac
+msg="obsidian-memory: Python 3.8+ não encontrado. Instale com: $how"
+if [ "$1" = "context" ]; then
+  printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s. Pergunte ao usuário se pode instalar."}}\n' "$msg"
+elif [ "$1" = "archive" ]; then
+  :
+else
+  printf '{"python": "ausente", "instalar": "%s"}\n' "$how"
+fi
+exit 0

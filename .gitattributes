@@ -1,0 +1,6 @@
+# Keep LF everywhere: the bash launcher breaks with CRLF on Windows (Git Bash).
+* text=auto eol=lf
+scripts/vault text eol=lf
+*.py text eol=lf
+*.json text eol=lf
+*.md text eol=lf

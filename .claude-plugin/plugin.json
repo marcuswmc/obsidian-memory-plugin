@@ -1,0 +1,18 @@
+{
+  "name": "obsidian-memory",
+  "displayName": "Obsidian Memory",
+  "version": "1.1.0",
+  "description": "Memória persistente por projeto para o Claude Code: um vault Obsidian (.obsidian-vault/) com CLAUDE.md de contexto, histórico de sessões, specs, planos, decisões e commits automáticos do vault.",
+  "author": {
+    "name": "Marcus Silva"
+  },
+  "license": "MIT",
+  "keywords": [
+    "obsidian",
+    "memory",
+    "context",
+    "vault",
+    "adr"
+  ],
+  "repository": "https://github.com/marcuswmc/obsidian-memory-plugin"
+}
