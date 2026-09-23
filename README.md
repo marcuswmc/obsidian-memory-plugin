@@ -34,7 +34,7 @@ Use **only one** of the two methods: with both installed, the hooks run twice. T
 The hooks ship with the plugin (`hooks/hooks.json`), so there's no need to edit `settings.json`.
 
 ### Claude Cowork
-The same plugin works in Cowork (Claude desktop app). Add the marketplace `marcuswmc/obsidian-memory-plugin` in Cowork's plugin settings and install **Obsidian Memory**. Then **select the project folder** when you start a session: Cowork works in its own session folder, so the plugin uses the selected folder as the project and keeps the vault there. Without a selected folder, memory stays off and nothing is written inside Cowork's session folders.
+The same plugin works in Cowork (Claude desktop app). Add the marketplace `marcuswmc/obsidian-memory-plugin` in Cowork's plugin settings and install **Obsidian Memory**. Then **select the project folder** when you start a session: Cowork works in its own session folder, so the plugin uses the selected folder as the project and keeps the vault there. Without a selected folder, memory stays off and nothing is written inside Cowork's session folders. Some Cowork sessions run remotely, where the plugin's hooks may not run: there the skill reads the vault by itself at the start of the session and writes the session note before it ends. If you don't see the project context, ask for `/obsidian-memory:vault status`.
 
 ### Windows
 - Install [Git for Windows](https://git-scm.com/downloads/win). The hooks run `bash scripts/vault …`, and Git Bash is what provides `bash`. If Claude Code can't find Git Bash, set `CLAUDE_CODE_GIT_BASH_PATH` (for example `C:\Program Files\Git\bin\bash.exe`) in the `env` block of `settings.json`.

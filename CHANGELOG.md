@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.3.1 — 23-09-2026
+- Remote Cowork sessions: hooks may not run there and the script may not reach the selected folder. The skill now loads at the start of a session when an attached folder has `.obsidian-vault/` but no vault context was injected, reads `CLAUDE.md` and the latest session with file tools, and saves the session note before the end (committing later if the script can't run).
+
 ## 1.3.0 — 23-09-2026
 - Claude Cowork support: when running inside a Cowork session, the project is the folder the user selected for the session (read from the session metadata), not Cowork's `outputs/` folder.
 - Fix: a Cowork session with no selected folder no longer creates a vault inside Cowork's internal session folders; memory stays off and SessionStart says so.

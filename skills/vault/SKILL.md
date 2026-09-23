@@ -1,6 +1,6 @@
 ---
 name: vault
-description: Project memory in an Obsidian vault at <root>/.obsidian-vault/ (context CLAUDE.md, daily, specs, plans, processes, decisions, bugs, retro). Use whenever the user asks to initialize the project's memory/vault/Obsidian, save/remember/record something, save the session context or summary, update the project state, record a decision/plan/spec/bug/process, resume a project ("where did we leave off?"), check the memory status, open the vault in Obsidian, check or install requirements, search earlier notes, or when the session is ending ("end of session", "save everything", "wrap up"). Also trigger when creating any project .md document that should persist across sessions.
+description: Project memory in an Obsidian vault at <root>/.obsidian-vault/ (context CLAUDE.md, daily, specs, plans, processes, decisions, bugs, retro). Use whenever the user asks to initialize the project's memory/vault/Obsidian, save/remember/record something, save the session context or summary, update the project state, record a decision/plan/spec/bug/process, resume a project ("where did we leave off?"), check the memory status, open the vault in Obsidian, check or install requirements, search earlier notes, or when the session is ending ("end of session", "save everything", "wrap up"). Also trigger when creating any project .md document that should persist across sessions. Also load it at the very start of a session when an attached project folder contains `.obsidian-vault/` but no "obsidian-memory" vault context was injected (hooks did not run, e.g. remote Claude Cowork sessions), before doing any other work.
 argument-hint: "[init | save | status | open | doctor]"
 allowed-tools: Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/vault" *) Bash(git -C * log *) Bash(git -C * status *)
 ---
@@ -67,7 +67,14 @@ Always use this exact form, with `bash` and the quotes. It is pre-approved and w
 In Claude Cowork the working folder is the session's own `outputs/`, not the project. The script detects this and uses the **folder the user selected** for the session as the project (the one that already has a vault, otherwise the first selected folder). Commands work the same, without `--cwd`.
 - **No folder selected:** memory is off, and `init` refuses to create a vault inside Cowork's session folders. Ask the user to add the project folder to the session.
 - **Context:** Cowork doesn't load the project's root `CLAUDE.md`, so SessionStart injects `.obsidian-vault/CLAUDE.md` in full. Treat it as the project context.
-- If the hooks didn't run (no vault context at the start), run `status` and read `.obsidian-vault/CLAUDE.md` yourself before working, and do the Save session flow before the session ends.
+- If the hooks didn't run, follow **Without hooks** below.
+
+### Without hooks (remote Cowork sessions)
+Some Cowork sessions run remotely and only reach the selected folder through file tools, so the hooks may not run and the script may not see the folder. You can tell because the conversation has no "obsidian-memory" vault context from SessionStart. In that case:
+1. **Find the vault:** take the folder(s) attached to the session, as listed in your system prompt, and look for `<folder>/.obsidian-vault/CLAUDE.md`.
+2. **Load context before working:** Read that CLAUDE.md, and Read the most recent `daily/<dd-mm-yyyy>/session-*.md` (Glob `daily/*/session-*.md` and pick the latest date and time; dates are `dd-mm-yyyy`, so compare year, month and day). Treat both as the project context.
+3. **Check the script:** try `status --cwd "<folder>"`. If it fails, or reports a different project root, the script can't reach the folder. Then work with file tools only (Read, Write, Edit, Glob, Grep), skip every command that needs the script, and don't try `init`.
+4. **Save before the end:** SessionEnd won't archive this session. When the work wraps up, or before the user leaves, do the Save session flow. For `info`, use today's date and the current time for `today_dir` and `session_suffix`. If the script can't run, write the notes with Write and tell the user the vault wasn't committed; the next local session's hooks will commit it.
 
 ## Structure
 ```
