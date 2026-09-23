@@ -49,6 +49,7 @@ FOLDERS = ["daily", "specs", "plans", "processes", "decisions", "bugs", "retro"]
 HOME = os.path.expanduser("~")
 CONTEXT_LIMIT = 12000
 STATE_FILE = ".state.json"
+COWORK_MARK = "local-agent-mode-sessions"  # Claude Cowork session storage
 FALLBACK_IDENTITY = ["-c", "user.name=Obsidian Memory", "-c", "user.email=obsidian-memory@localhost"]
 
 REMINDER_RE = re.compile(r"<system-reminder>.*?</system-reminder>", re.S)
@@ -210,8 +211,40 @@ def migrate_legacy(root):
                     f.write(txt)
 
 
+def in_cowork(path):
+    """True when path is inside a Claude Cowork session folder (its cwd is <session>/outputs)."""
+    return COWORK_MARK in os.path.realpath(path).split(os.sep)
+
+
+def cowork_folders(cwd):
+    """Folders the user selected for this Cowork session, read from the session's <local_id>.json."""
+    d = os.path.realpath(cwd)
+    while os.path.dirname(d) != d:
+        meta = d + ".json"
+        if os.path.basename(d).startswith("local_") and os.path.isfile(meta):
+            out = []
+            for f in read_json(meta, {}).get("userSelectedFolders") or []:
+                p = f if isinstance(f, str) else (f.get("path") or f.get("hostPath") or "") if isinstance(f, dict) else ""
+                if p and os.path.isdir(p):
+                    out.append(p)
+            return out
+        d = os.path.dirname(d)
+    return []
+
+
 def project_root(cwd=None):
     cwd = os.path.realpath(os.path.abspath(cwd or os.getcwd()))
+    if in_cowork(cwd):
+        # Cowork runs in its own outputs folder; the project is a folder the user selected.
+        roots = [find_root(f) for f in cowork_folders(cwd)]
+        with_vault = [r for r in roots if os.path.isfile(os.path.join(r, VAULT_DIR, "CLAUDE.md"))]
+        usable = with_vault or [r for r in roots if not excluded(r)]
+        return usable[0] if usable else cwd
+    return find_root(cwd)
+
+
+def find_root(cwd):
+    cwd = os.path.realpath(os.path.abspath(cwd))
     d = cwd
     while True:
         for name in [VAULT_DIR] + LEGACY_VAULT_DIRS:
@@ -232,6 +265,8 @@ def excluded(root):
         HOME, "/", "/tmp", "/private/tmp", tempfile.gettempdir(),
         os.path.join(HOME, "Downloads"), os.path.join(HOME, "Desktop"), os.path.join(HOME, "Documents"))}
     if real in bad or os.path.dirname(real) == real:  # drive root (C:\) or /
+        return True
+    if in_cowork(real):  # Cowork's internal session folders
         return True
     prefixes = [os.path.join(HOME, ".claude"), tempfile.gettempdir(), "/tmp", "/private/tmp"]
     return any(real.startswith(os.path.normcase(os.path.realpath(p)) + os.sep) for p in prefixes)
@@ -801,10 +836,18 @@ def cmd_context():
     except ValueError:
         data = {}
     source = data.get("source", "")
-    p = paths(project_root(data.get("cwd")))
-    if p["vault_exists"]:
+    cwd = data.get("cwd") or os.getcwd()
+    cowork = in_cowork(cwd)
+    p = paths(project_root(cwd))
+    if cowork and in_cowork(p["project_root"]):
+        ctx = ("obsidian-memory: no project folder is selected in this Cowork session, so project memory is off. "
+               "If the user wants it, ask them to add the project folder to the session.")
+    elif p["vault_exists"]:
         ctx = "This project has an Obsidian vault at %s (project memory). Use the obsidian-memory plugin to read and write it." % p["vault"]
-        if has_root_import(p["project_root"]) and source != "compact":
+        if cowork:
+            ctx += " Project folder (selected in Cowork): %s" % p["project_root"]
+        # Cowork doesn't load the project's CLAUDE.md, so the @import can't be relied on there.
+        if has_root_import(p["project_root"]) and source != "compact" and not cowork:
             ctx += "\n(%s is already loaded via @import in the root CLAUDE.md.)" % p["claude_md"]
         else:
             ctx += "\n\n=== %s ===\n%s" % (p["claude_md"], read_capped(p["claude_md"], CONTEXT_LIMIT))
@@ -823,6 +866,10 @@ def cmd_context():
 
 
 def cmd_status(root):
+    if in_cowork(root):
+        print("Cowork session with no project folder selected: project memory is off. "
+              "Ask the user to add the project folder to the session.")
+        return
     p = paths(root)
     v = p["vault"]
     out = ["Project: %s" % root, "Vault: %s (%s)" % (v, "exists" if p["vault_exists"] else "does NOT exist — run init")]
@@ -897,7 +944,8 @@ def main():
         no_obs = pop_opt(args, "--no-obsidian", False)
         result = {"project_root": root}
         if excluded(root):
-            result["warning"] = "Excluded folder (home, Downloads, Desktop, Documents, tmp). Use --cwd with the project folder."
+            result["warning"] = ("Excluded folder (home, Downloads, Desktop, Documents, tmp, Cowork session folder). "
+                                 "Use --cwd with the project folder; in Cowork, ask the user to select it.")
             emit(result)
             return
         result["vault_created"] = not os.path.isfile(os.path.join(root, VAULT_DIR, "CLAUDE.md"))

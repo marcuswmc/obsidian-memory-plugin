@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0 — 23-09-2026
+- Claude Cowork support: when running inside a Cowork session, the project is the folder the user selected for the session (read from the session metadata), not Cowork's `outputs/` folder.
+- Fix: a Cowork session with no selected folder no longer creates a vault inside Cowork's internal session folders; memory stays off and SessionStart says so.
+- In Cowork, SessionStart injects the full `.obsidian-vault/CLAUDE.md`, since Cowork doesn't load the project's root `CLAUDE.md`.
+
 ## 1.2.1 — 23-09-2026
 - Fix: when a project ignores its own `.obsidian-vault/` in `.gitignore`, the vault commit is skipped (`vault-ignored-by-project`) instead of failing with an error on every save and session end.
 

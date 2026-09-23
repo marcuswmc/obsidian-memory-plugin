@@ -63,6 +63,12 @@ Always use this exact form, with `bash` and the quotes. It is pre-approved and w
 - **PreCompact and SessionEnd:** save the transcript and memory to `daily/<date>/`, regenerate the index and commit the vault.
 - **Commits:** only files in `.obsidian-vault/` are included. The user's staged work is never touched, and nothing is ever pushed. Before committing, the script scans for secrets (`sk-` keys, GitHub, Slack and Google tokens, AWS keys, private keys, `password=`/`senha:` etc.). If it finds any, it **does not commit** and records an alert that shows up at the start of the next session.
 
+## Cowork
+In Claude Cowork the working folder is the session's own `outputs/`, not the project. The script detects this and uses the **folder the user selected** for the session as the project (the one that already has a vault, otherwise the first selected folder). Commands work the same, without `--cwd`.
+- **No folder selected:** memory is off, and `init` refuses to create a vault inside Cowork's session folders. Ask the user to add the project folder to the session.
+- **Context:** Cowork doesn't load the project's root `CLAUDE.md`, so SessionStart injects `.obsidian-vault/CLAUDE.md` in full. Treat it as the project context.
+- If the hooks didn't run (no vault context at the start), run `status` and read `.obsidian-vault/CLAUDE.md` yourself before working, and do the Save session flow before the session ends.
+
 ## Structure
 ```
 .obsidian-vault/

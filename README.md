@@ -33,6 +33,9 @@ Use **only one** of the two methods: with both installed, the hooks run twice. T
 
 The hooks ship with the plugin (`hooks/hooks.json`), so there's no need to edit `settings.json`.
 
+### Claude Cowork
+The same plugin works in Cowork (Claude desktop app). Add the marketplace `marcuswmc/obsidian-memory-plugin` in Cowork's plugin settings and install **Obsidian Memory**. Then **select the project folder** when you start a session: Cowork works in its own session folder, so the plugin uses the selected folder as the project and keeps the vault there. Without a selected folder, memory stays off and nothing is written inside Cowork's session folders.
+
 ### Windows
 - Install [Git for Windows](https://git-scm.com/downloads/win). The hooks run `bash scripts/vault …`, and Git Bash is what provides `bash`. If Claude Code can't find Git Bash, set `CLAUDE_CODE_GIT_BASH_PATH` (for example `C:\Program Files\Git\bin\bash.exe`) in the `env` block of `settings.json`.
 - The `scripts/vault` launcher tries `python3`, `python` and `py -3`, in that order, and skips the Microsoft Store shortcut that isn't a real Python.
