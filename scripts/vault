@@ -12,16 +12,16 @@ done
 
 # No usable Python: explain how to install it, without failing hooks.
 case "$(uname -s 2>/dev/null)" in
-  Darwin) how="xcode-select --install   (ou: brew install python)" ;;
-  MINGW*|MSYS*|CYGWIN*) how="winget install --id Python.Python.3.12 -e   (ou https://www.python.org/downloads/)" ;;
-  *) how="sudo apt install python3   (ou dnf/pacman equivalente)" ;;
+  Darwin) how="xcode-select --install   (or: brew install python)" ;;
+  MINGW*|MSYS*|CYGWIN*) how="winget install --id Python.Python.3.12 -e   (or https://www.python.org/downloads/)" ;;
+  *) how="sudo apt install python3   (or the dnf/pacman equivalent)" ;;
 esac
-msg="obsidian-memory: Python 3.8+ não encontrado. Instale com: $how"
+msg="obsidian-memory: Python 3.8+ not found. Install it with: $how"
 if [ "$1" = "context" ]; then
-  printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s. Pergunte ao usuário se pode instalar."}}\n' "$msg"
+  printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s. Ask the user before installing."}}\n' "$msg"
 elif [ "$1" = "archive" ]; then
   :
 else
-  printf '{"python": "ausente", "instalar": "%s"}\n' "$how"
+  printf '{"python": "missing", "install": "%s"}\n' "$how"
 fi
 exit 0

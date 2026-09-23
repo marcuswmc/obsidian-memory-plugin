@@ -1,20 +1,20 @@
 ---
-tipo: spec
-status: rascunho
-data: {{date:DD-MM-YYYY}}
+type: spec
+status: draft
+date: {{date:DD-MM-YYYY}}
 tags: [claude/spec]
 ---
 # {{title}}
 
-Contexto: [[CLAUDE]]
+Context: [[CLAUDE]]
 
-## Problema
+## Problem
 
-## Objetivo
+## Goal
 
-## Fora de escopo
+## Out of scope
 
-## Critérios de aceite
+## Acceptance criteria
 - [ ] 
 
-## Notas técnicas
+## Technical notes

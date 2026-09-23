@@ -1,11 +1,16 @@
 # Changelog
 
+## 1.2.0 — 23-09-2026
+- Everything in English: README, skill instructions, script messages and JSON keys, note templates, generated `CLAUDE.md` model and manifests.
+- Renamed files: `session-*.md` (was `sessao-*.md`), `memory/` (was `memoria/`), templates `decision`, `plan`, `process`, `session`, `daily-note`. Older vaults keep working: `sessao-*.md` is still read as a session and `memoria/` stays out of git.
+- Note content follows the user's conversation language.
+
 ## 1.1.0 — 23-09-2026
-- Suporte a Windows (via Git Bash) e Linux: lançador `scripts/vault` que acha `python3`, `python` ou `py -3`; caminhos, processos e URIs do Obsidian por sistema; UTF-8 em todas as leituras e escritas.
-- Detecção do Obsidian Desktop instalado; se não houver, abre a página de download.
-- Novos comandos `doctor` (verifica python, git, identidade do git, Obsidian e Git Bash) e `install git|python|obsidian` (sempre com aprovação do usuário).
-- `marketplace.json` para instalar direto do GitHub.
-- `.obsidian/plugins/` fora do git (código de terceiros e possíveis tokens em `data.json`); o `.gitignore` de vaults antigos é atualizado no próximo commit.
+- Windows (via Git Bash) and Linux support: `scripts/vault` launcher that finds `python3`, `python` or `py -3`; per-OS Obsidian paths, processes and URIs; UTF-8 for every read and write.
+- Detects the Obsidian Desktop app; if it's missing, opens the download page.
+- New `doctor` (checks python, git, git identity, Obsidian and Git Bash) and `install git|python|obsidian` commands (always with the user's approval).
+- `marketplace.json` for installing straight from GitHub.
+- `.obsidian/plugins/` kept out of git (third-party code and possible tokens in `data.json`); older vaults get the updated `.gitignore` on their next commit.
 
 ## 1.0.0 — 23-09-2026
-- Plugin com hooks SessionStart, PreCompact e SessionEnd; skill `vault` (init, save, status, open); templates; `.obsidian/` pré-configurado; commits só do vault com scan de segredos.
+- Plugin with SessionStart, PreCompact and SessionEnd hooks; `vault` skill (init, save, status, open); templates; pre-configured `.obsidian/`; commits of the vault only, with a secret scan.

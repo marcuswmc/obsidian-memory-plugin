@@ -2,5 +2,5 @@ __pycache__/
 *.pyc
 .DS_Store
 
-# Memória local do Claude sobre este repositório (histórico pessoal; não publicar)
+# Claude's local memory about this repository (personal history; do not publish)
 .obsidian-vault/

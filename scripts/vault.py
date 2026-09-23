@@ -5,9 +5,9 @@ Each project gets <project-root>/.obsidian-vault/:
   CLAUDE.md          AI context file (Project, Tech Stack, Current State, Key Decisions, File Map, Do Not)
   _index.md          generated index of every note
   00-inbox.md        quick captures
-  daily/<dd-mm-aaaa>/sessao-HHhMM.md              curated session summary (written by Claude)
-  daily/<dd-mm-aaaa>/transcript-HHhMM-<id>.md     raw transcript (hooks; not in git)
-  daily/<dd-mm-aaaa>/memoria/*.md                 snapshot of Claude's auto-memory (not in git)
+  daily/<dd-mm-yyyy>/session-HHhMM.md             curated session summary (written by Claude)
+  daily/<dd-mm-yyyy>/transcript-HHhMM-<id>.md     raw transcript (hooks; not in git)
+  daily/<dd-mm-yyyy>/memory/*.md                  snapshot of Claude's auto-memory (not in git)
   specs/ plans/ processes/ decisions/ bugs/ retro/
   templates/         note templates (Obsidian Templates core plugin + Claude)
   .obsidian/         pre-configured Obsidian settings
@@ -55,70 +55,70 @@ REMINDER_RE = re.compile(r"<system-reminder>.*?</system-reminder>", re.S)
 TAG_BLOCK_RE = re.compile(r"<(command-[a-z-]+|local-command-[a-z]+)>.*?</\1>", re.S)
 
 SECRET_PATTERNS = [
-    ("chave sk- (OpenAI/Anthropic)", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}")),
-    ("token GitHub", re.compile(r"\b(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{30,}|\bgithub_pat_[A-Za-z0-9_]{40,}")),
-    ("chave AWS", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
-    ("token Slack", re.compile(r"\bxox[abprs]-[A-Za-z0-9-]{10,}")),
-    ("token Google", re.compile(r"\bAIza[0-9A-Za-z_-]{35}\b")),
-    ("chave privada", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")),
-    ("credencial atribuída", re.compile(
+    ("sk- key (OpenAI/Anthropic)", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}")),
+    ("GitHub token", re.compile(r"\b(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{30,}|\bgithub_pat_[A-Za-z0-9_]{40,}")),
+    ("AWS key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
+    ("Slack token", re.compile(r"\bxox[abprs]-[A-Za-z0-9-]{10,}")),
+    ("Google token", re.compile(r"\bAIza[0-9A-Za-z_-]{35}\b")),
+    ("private key", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")),
+    ("assigned credential", re.compile(
         r"(?i)\b(password|passwd|senha|secret|api[_-]?key|access[_-]?token|auth[_-]?token)\b\s*[:=]\s*['\"]?[^\s'\"`]{8,}")),
 ]
 
 CLAUDE_TEMPLATE = """# Project
 
-{name} — _(o que é, para quem e qual o objetivo; 2 a 4 frases)_
+{name} — _(what it is, who it's for and its goal; 2 to 4 sentences)_
 
 ## Tech Stack
 
 | Layer | Tool |
 |---|---|
-| _(a preencher)_ | |
+| _(to fill in)_ | |
 
 ## Current State
 
-> Atualize esta seção sempre que voltar de uma pausa. Trinta segundos aqui economizam cinco minutos de reorientação.
+> Update this section every time you return after a break. Thirty seconds here saves five minutes of re-orientation.
 
 **Last updated:** {today}
 
 ### Working
-- Vault `.obsidian-vault/` criado
+- `.obsidian-vault/` created
 
 ### Broken / Blocked
 - None
 
 ### Focus right now
-- _(a preencher)_
+- _(to fill in)_
 
 ## Key Decisions Made
 
-Estas estão decididas. Não reabra sem um bom motivo (detalhes em `decisions/`).
+These are settled. Do not reopen them without a good reason (details in `decisions/`).
 
-- _(a preencher)_
+- _(to fill in)_
 
 ## File Map
 
 ```
 {name}/
-├── CLAUDE.md                 # Importa @.obsidian-vault/CLAUDE.md (carregamento nativo)
-├── .obsidian-vault/          # Base de conhecimento Obsidian
-│   ├── CLAUDE.md             # ← contexto para a IA (este arquivo)
-│   ├── _index.md             # Índice gerado de todas as notas
-│   ├── 00-inbox.md           # Notas não processadas e capturas rápidas
-│   ├── daily/                # Uma pasta por dia (dd-mm-aaaa), um arquivo por sessão
-│   ├── specs/                # Specs de features antes do código
-│   ├── plans/                # Planos de implementação e roadmaps
-│   ├── processes/            # Processos, runbooks, passo a passo recorrente
-│   ├── decisions/            # Decisões de arquitetura (ADRs)
-│   ├── bugs/                 # Bugs e notas de investigação
-│   ├── retro/                # Retrospectivas e lições aprendidas
-│   └── templates/            # Modelos de nota (Obsidian Templates)
-└── _(a preencher com a estrutura do projeto)_
+├── CLAUDE.md                 # Imports @.obsidian-vault/CLAUDE.md (native loading)
+├── .obsidian-vault/          # Obsidian knowledge base
+│   ├── CLAUDE.md             # ← AI context file (you are here)
+│   ├── _index.md             # Generated index of every note
+│   ├── 00-inbox.md           # Unprocessed notes and quick captures
+│   ├── daily/                # One folder per day (dd-mm-yyyy), one file per session
+│   ├── specs/                # Feature specs before coding starts
+│   ├── plans/                # Implementation plans and roadmaps
+│   ├── processes/            # Processes, runbooks, recurring procedures
+│   ├── decisions/            # Architectural decisions (ADRs)
+│   ├── bugs/                 # Bug reports and investigation notes
+│   ├── retro/                # Retrospectives and lessons learned
+│   └── templates/            # Note templates (Obsidian Templates)
+└── _(fill in with the project structure)_
 ```
 
 ## Do Not
 
-**Pare. Leia a decisão linkada antes de sugerir mudanças nessas áreas.**
+**Stop. Read the linked decision record before suggesting any change in these areas.**
 
 - _(a preencher)_
 """
@@ -129,7 +129,8 @@ GITIGNORE_LINES = [
     ".obsidian/plugins/",
     STATE_FILE,
     "daily/**/transcript-*.md",
-    "daily/**/memoria/",
+    "daily/**/memory/",
+    "daily/**/memoria/",  # legacy name
 ]
 
 OBSIDIAN_CONFIG = {
@@ -137,15 +138,15 @@ OBSIDIAN_CONFIG = {
         "file-explorer", "global-search", "switcher", "graph", "backlink", "outgoing-link", "tag-pane",
         "properties", "page-preview", "daily-notes", "templates", "note-composer", "command-palette",
         "editor-status", "bookmarks", "outline", "word-count", "file-recovery"]},
-    "daily-notes.json": {"folder": "daily", "format": "DD-MM-YYYY/[dia]", "template": "templates/nota-do-dia"},
+    "daily-notes.json": {"folder": "daily", "format": "DD-MM-YYYY/[day]", "template": "templates/daily-note"},
     "templates.json": {"folder": "templates", "dateFormat": "DD-MM-YYYY", "timeFormat": "HH:mm"},
     "app.json": {"alwaysUpdateLinks": True},
 }
 
 ROOT_IMPORT = "@%s/CLAUDE.md" % VAULT_DIR
-ROOT_BLOCK = ("\n## Memória do projeto (Obsidian)\n\n"
-              "Contexto, estado atual, decisões e histórico ficam em `%s/`. "
-              "Mantenha-os atualizados com o plugin obsidian-memory.\n\n%s\n" % (VAULT_DIR, ROOT_IMPORT))
+ROOT_BLOCK = ("\n## Project memory (Obsidian)\n\n"
+              "Context, current state, decisions and history live in `%s/`. "
+              "Keep them up to date with the obsidian-memory plugin.\n\n%s\n" % (VAULT_DIR, ROOT_IMPORT))
 
 
 # ---------------------------------------------------------------- utils
@@ -241,14 +242,14 @@ def paths(root):
     now = dt.datetime.now()
     return {
         "project_root": root,
-        "projeto": os.path.basename(root.rstrip("/")),
+        "project": os.path.basename(root.rstrip("/")),
         "vault": v,
         "claude_md": os.path.join(v, "CLAUDE.md"),
-        "vault_existe": os.path.isfile(os.path.join(v, "CLAUDE.md")),
+        "vault_exists": os.path.isfile(os.path.join(v, "CLAUDE.md")),
         "templates": os.path.join(v, "templates"),
-        "pasta_hoje": os.path.join(v, "daily", now.strftime(DATE_FMT)),
-        "data_hoje": now.strftime(DATE_FMT),
-        "sufixo_sessao": now.strftime("%Hh%M"),
+        "today_dir": os.path.join(v, "daily", now.strftime(DATE_FMT)),
+        "today": now.strftime(DATE_FMT),
+        "session_suffix": now.strftime("%Hh%M"),
     }
 
 
@@ -330,7 +331,7 @@ def init_vault(root, name=None):
     inbox = os.path.join(v, "00-inbox.md")
     if not os.path.exists(inbox):
         with uopen(inbox, "w") as f:
-            f.write("# Inbox\n\nCapturas rápidas. Processe para specs/, plans/, decisions/, bugs/ quando fizer sentido.\n\n")
+            f.write("# Inbox\n\nQuick captures. Move them to specs/, plans/, decisions/ or bugs/ when it makes sense.\n\n")
     ensure_gitignore(v)
     ensure_obsidian_config(v)
     ensure_templates(v)
@@ -359,7 +360,7 @@ def scan_secrets(root, pathspecs):
         elif line.startswith("+"):
             for label, rx in SECRET_PATTERNS:
                 if rx.search(line):
-                    hits.append({"arquivo": current, "tipo": label})
+                    hits.append({"file": current, "type": label})
                     break
     return hits
 
@@ -368,36 +369,36 @@ def git_commit(root, message, extra_paths=None):
     """Commit only the vault (plus extra_paths); never touches other staged work."""
     v = os.path.join(root, VAULT_DIR)
     if not is_git(root):
-        return {"git": "sem-repositorio"}
+        return {"git": "no-repository"}
     ensure_gitignore(v)  # keeps older vaults up to date (e.g. .obsidian/plugins/)
     specs = [v] + [p for p in (extra_paths or []) if os.path.exists(p)]
     code, _, err = sh(["git", "-C", root, "add", "-A", "--"] + specs)
     if code != 0:
-        return {"git": "erro", "detalhe": err}
+        return {"git": "error", "detail": err}
     _, changed, _ = sh(["git", "-C", root, "diff", "--cached", "--name-only", "--"] + specs)
     if not changed:
-        return {"git": "sem-mudancas"}
+        return {"git": "no-changes"}
     hits = scan_secrets(root, specs)
     if hits:
         sh(["git", "-C", root, "reset", "-q", "--"] + specs)
-        save_state(v, commit_bloqueado={"quando": dt.datetime.now().strftime("%d-%m-%Y %H:%M"), "achados": hits})
-        return {"git": "bloqueado-por-segredo", "achados": hits}
+        save_state(v, blocked_commit={"when": dt.datetime.now().strftime("%d-%m-%Y %H:%M"), "findings": hits})
+        return {"git": "blocked-by-secret", "findings": hits}
     code, _, err = sh(["git", "-C", root] + git_identity(root) + ["commit", "-q", "-m", message, "--"] + specs)
     if code != 0:
-        return {"git": "erro", "detalhe": err}
+        return {"git": "error", "detail": err}
     _, sha, _ = sh(["git", "-C", root, "rev-parse", "--short", "HEAD"])
-    save_state(v, ultimo_commit={"sha": sha, "msg": message, "quando": dt.datetime.now().strftime("%d-%m-%Y %H:%M")},
-               commit_bloqueado=None)
-    return {"git": "commit", "sha": sha, "arquivos": len(changed.splitlines())}
+    save_state(v, last_commit={"sha": sha, "msg": message, "when": dt.datetime.now().strftime("%d-%m-%Y %H:%M")},
+               blocked_commit=None)
+    return {"git": "commit", "sha": sha, "files": len(changed.splitlines())}
 
 
 def git_init(root):
     if is_git(root):
-        return "existente"
+        return "existing"
     if excluded(root):
-        return "pulado-pasta-excluida"
+        return "skipped-excluded-folder"
     code, _, err = sh(["git", "init", "-q", root])
-    return "iniciado" if code == 0 else "erro: " + err
+    return "initialized" if code == 0 else "error: " + err
 
 
 # ---------------------------------------------------------------- obsidian
@@ -521,29 +522,29 @@ def obsidian_quit():
 def cmd_open(root, restart=False):
     v = os.path.join(root, VAULT_DIR)
     if not os.path.isfile(os.path.join(v, "CLAUDE.md")):
-        return {"obsidian": "sem-vault", "mensagem": "Rode init antes."}
+        return {"obsidian": "no-vault", "message": "Run init first."}
     if not obsidian_installed():
         opened = open_download_page()
-        return {"obsidian": "nao-instalado", "pagina_download_aberta": opened, "url": OBSIDIAN_DOWNLOAD,
-                "instalar": install_plan().get("obsidian"),
-                "mensagem": "Obsidian não encontrado. A página de download foi aberta; também dá para instalar "
-                            "pelo gerenciador de pacotes (pergunte ao usuário antes). Depois rode open."}
+        return {"obsidian": "not-installed", "download_page_opened": opened, "url": OBSIDIAN_DOWNLOAD,
+                "install": install_plan().get("obsidian"),
+                "message": "Obsidian not found. The download page was opened; it can also be installed with "
+                           "the package manager (ask the user first). Then run open."}
     vid = obsidian_vault_id(v)
     if vid:
         ok, err = obsidian_open_uri(vid)
-        return {"obsidian": "aberto" if ok else "erro", "vault_id": vid, "detalhe": err or None}
+        return {"obsidian": "opened" if ok else "error", "vault_id": vid, "detail": err or None}
     if obsidian_running():
         if not restart:
-            return {"obsidian": "precisa-reiniciar",
-                    "mensagem": "O vault ainda não está registrado e o Obsidian está aberto. Registrar exige fechar e "
-                                "reabrir o Obsidian. Pergunte ao usuário; se ele aceitar, rode: open --restart"}
+            return {"obsidian": "needs-restart",
+                    "message": "The vault isn't registered yet and Obsidian is running. Registering requires closing and "
+                               "reopening Obsidian. Ask the user; if they agree, run: open --restart"}
         if not obsidian_quit():
-            return {"obsidian": "erro", "mensagem": "Não consegui fechar o Obsidian. Feche-o e rode open de novo."}
+            return {"obsidian": "error", "message": "Could not close Obsidian. Close it and run open again."}
     vid = obsidian_register(v)
     time.sleep(0.5)
     ok, err = obsidian_open_uri(vid)
-    return {"obsidian": "registrado-e-aberto" if ok else "registrado-erro-ao-abrir", "vault_id": vid,
-            "detalhe": err or None}
+    return {"obsidian": "registered-and-opened" if ok else "registered-open-failed", "vault_id": vid,
+            "detail": err or None}
 
 
 # ---------------------------------------------------------------- requirements (doctor / install)
@@ -598,26 +599,26 @@ def cmd_doctor(root):
     app = obsidian_app_path()
     plan = install_plan()
     checks = {
-        "sistema": sys.platform,
-        "python": {"ok": True, "versao": sys.version.split()[0], "executavel": sys.executable},
-        "git": {"ok": code == 0, "versao": gitv or None},
-        "git_identidade": {"ok": bool(gname and gmail), "nome": gname or None, "email": gmail or None},
-        "obsidian": {"ok": app is not None, "app": app, "aberto": obsidian_running() if app else False,
+        "platform": sys.platform,
+        "python": {"ok": True, "version": sys.version.split()[0], "executable": sys.executable},
+        "git": {"ok": code == 0, "version": gitv or None},
+        "git_identity": {"ok": bool(gname and gmail), "name": gname or None, "email": gmail or None},
+        "obsidian": {"ok": app is not None, "app": app, "running": obsidian_running() if app else False,
                      "config": obsidian_config_path()},
-        "gerenciador_de_pacotes": package_manager(),
-        "projeto": root,
+        "package_manager": package_manager(),
+        "project": root,
     }
     if IS_WIN:
         checks["git_bash"] = {"ok": bool(os.environ.get("MSYSTEM") or shutil.which("bash")),
-                              "dica": "Os hooks precisam do Git Bash (vem com o Git for Windows)."}
-    faltando = [k for k in ("git", "obsidian") if not checks[k]["ok"]]
-    if IS_WIN and not checks["git_bash"]["ok"] and "git" not in faltando:
-        faltando.append("git")
-    checks["faltando"] = faltando
-    checks["como_instalar"] = {k: {"comando": " ".join(plan[k]["cmd"]) if plan[k]["cmd"] else None,
-                                   "automatico": plan[k]["auto"], "manual": plan[k]["manual"]} for k in faltando}
-    if not checks["git_identidade"]["ok"]:
-        checks["recomendado"] = 'git config --global user.name "Seu Nome" && git config --global user.email "voce@exemplo.com"'
+                              "hint": "The hooks need Git Bash (ships with Git for Windows)."}
+    missing = [k for k in ("git", "obsidian") if not checks[k]["ok"]]
+    if IS_WIN and not checks["git_bash"]["ok"] and "git" not in missing:
+        missing.append("git")
+    checks["missing"] = missing
+    checks["how_to_install"] = {k: {"command": " ".join(plan[k]["cmd"]) if plan[k]["cmd"] else None,
+                                    "automatic": plan[k]["auto"], "manual": plan[k]["manual"]} for k in missing}
+    if not checks["git_identity"]["ok"]:
+        checks["recommended"] = 'git config --global user.name "Your Name" && git config --global user.email "you@example.com"'
     return checks
 
 
@@ -625,15 +626,15 @@ def cmd_install(item):
     """Run the install for one requirement. Claude must ask the user BEFORE calling this."""
     plan = install_plan().get(item)
     if not plan:
-        return {"erro": "item desconhecido: %s (use git, python ou obsidian)" % item}
+        return {"error": "unknown item: %s (use git, python or obsidian)" % item}
     if not plan["cmd"] or not plan["auto"]:
         if item == "obsidian":
             open_download_page()
-        return {"instalado": False, "motivo": "precisa de ação manual (sudo, senha ou sem gerenciador de pacotes)",
-                "comando_para_o_usuario": " ".join(plan["cmd"]) if plan["cmd"] else None, "manual": plan["manual"]}
+        return {"installed": False, "reason": "needs manual action (sudo, password or no package manager)",
+                "command_for_user": " ".join(plan["cmd"]) if plan["cmd"] else None, "manual": plan["manual"]}
     code, out, err = sh(plan["cmd"], timeout=900)
-    return {"instalado": code == 0, "comando": " ".join(plan["cmd"]), "saida": (out or err)[-1500:],
-            "observacao": "Reabra o terminal/Claude Code se o comando novo não for encontrado." if code == 0 else None}
+    return {"installed": code == 0, "command": " ".join(plan["cmd"]), "output": (out or err)[-1500:],
+            "note": "Reopen the terminal/Claude Code if the new command isn't found." if code == 0 else None}
 
 
 # ---------------------------------------------------------------- transcript
@@ -682,7 +683,7 @@ def render_transcript(path):
             when = local_time(e.get("timestamp", "")).strftime("%H:%M")
             if role == "user":
                 n_user += 1
-                lines.append("### 🧑 Usuário · %s\n\n%s\n" % (when, "\n\n".join(out)))
+                lines.append("### 🧑 User · %s\n\n%s\n" % (when, "\n\n".join(out)))
             else:
                 lines.append("### 🤖 Claude · %s\n\n%s\n" % (when, "\n\n".join(out)))
     return start or dt.datetime.now().astimezone(), "\n".join(lines), n_user
@@ -691,7 +692,7 @@ def render_transcript(path):
 def cmd_archive():
     data = json.load(sys.stdin)
     tpath = data.get("transcript_path")
-    sid = data.get("session_id", "sessao")
+    sid = data.get("session_id", "session")
     cwd = data.get("cwd") or os.getcwd()
     reason = data.get("reason") or data.get("trigger") or data.get("hook_event_name", "")
     if not tpath or not os.path.exists(tpath):
@@ -709,20 +710,20 @@ def cmd_archive():
     fname = "transcript-%s-%s.md" % (start.strftime("%Hh%M"), sid[:8])
     with uopen(os.path.join(ddir, fname), "w") as f:
         f.write(
-            "---\ntipo: transcript\ndata: %s\nsession_id: %s\ncwd: \"%s\"\nmotivo: %s\ntags: [claude/transcript]\n---\n\n"
-            "# Transcript %s · %s\n\nContexto: [[CLAUDE]]\n\n%s\n"
+            "---\ntype: transcript\ndate: %s\nsession_id: %s\ncwd: \"%s\"\nreason: %s\ntags: [claude/transcript]\n---\n\n"
+            "# Transcript %s · %s\n\nContext: [[CLAUDE]]\n\n%s\n"
             % (day, sid, cwd, reason, day, start.strftime("%H:%M"), body)
         )
     mem = os.path.join(os.path.dirname(tpath), "memory")
     if os.path.isdir(mem):
-        mdir = os.path.join(ddir, "memoria")
+        mdir = os.path.join(ddir, "memory")
         os.makedirs(mdir, exist_ok=True)
         for n in os.listdir(mem):
             if n.endswith(".md"):
                 shutil.copy2(os.path.join(mem, n), os.path.join(mdir, n))
     build_index(v)
-    save_state(v, ultimo_arquivamento={"quando": dt.datetime.now().strftime("%d-%m-%Y %H:%M"), "motivo": reason})
-    git_commit(root, "vault: sessão %s %s (%s)" % (day, start.strftime("%H:%M"), reason or "fim"))
+    save_state(v, last_archive={"when": dt.datetime.now().strftime("%d-%m-%Y %H:%M"), "reason": reason})
+    git_commit(root, "vault: session %s %s (%s)" % (day, start.strftime("%H:%M"), reason or "end"))
 
 
 # ---------------------------------------------------------------- index / context / status
@@ -734,9 +735,9 @@ def build_index(v):
         except ValueError:
             return dt.datetime.min
 
-    out = ["---\ntipo: indice\ntags: [claude/indice]\n---\n", "# Índice\n",
-           "_Gerado automaticamente em %s. Não edite à mão._\n" % dt.datetime.now().strftime("%d-%m-%Y %H:%M"),
-           "- [[CLAUDE]] — contexto do projeto", "- [[00-inbox]] — inbox\n"]
+    out = ["---\ntype: index\ntags: [claude/index]\n---\n", "# Index\n",
+           "_Generated automatically on %s. Do not edit by hand._\n" % dt.datetime.now().strftime("%d-%m-%Y %H:%M"),
+           "- [[CLAUDE]] — project context", "- [[00-inbox]] — inbox\n"]
     for folder in FOLDERS:
         fdir = os.path.join(v, folder)
         if not os.path.isdir(fdir):
@@ -748,7 +749,7 @@ def build_index(v):
             out.append("## daily\n")
             for d in days:
                 notes = sorted(n[:-3] for n in os.listdir(os.path.join(fdir, d)) if n.endswith(".md"))
-                out.append("- **%s** — %s" % (d, " · ".join("[[daily/%s/%s|%s]]" % (d, n, n) for n in notes) or "_vazio_"))
+                out.append("- **%s** — %s" % (d, " · ".join("[[daily/%s/%s|%s]]" % (d, n, n) for n in notes) or "_empty_"))
             out.append("")
         else:
             notes = sorted(n[:-3] for n in os.listdir(fdir) if n.endswith(".md"))
@@ -770,7 +771,7 @@ def latest_session(v):
             except ValueError:
                 continue
             for n in os.listdir(os.path.join(ddir, d)):
-                if n.startswith("sessao-") and n.endswith(".md"):
+                if n.startswith(("session-", "sessao-")) and n.endswith(".md"):  # sessao- = legacy
                     key = (day, n)
                     if best is None or key > best[0]:
                         best = (key, os.path.join(ddir, d, n))
@@ -784,12 +785,12 @@ def read_capped(p, limit):
 
 
 def alerts(v):
-    b = load_state(v).get("commit_bloqueado")
+    b = load_state(v).get("blocked_commit")
     if not b:
         return ""
-    itens = "; ".join("%s em %s" % (h["tipo"], h["arquivo"]) for h in b.get("achados", []))
-    return ("\n\n⚠️ O último commit automático do vault (%s) foi BLOQUEADO por possível segredo: %s. "
-            "Avise o usuário, remova o segredo e rode save." % (b.get("quando"), itens))
+    items = "; ".join("%s in %s" % (h["type"], h["file"]) for h in b.get("findings", []))
+    return ("\n\n⚠️ The last automatic vault commit (%s) was BLOCKED by a possible secret: %s. "
+            "Tell the user, remove the secret and run save." % (b.get("when"), items))
 
 
 def cmd_context():
@@ -799,53 +800,53 @@ def cmd_context():
         data = {}
     source = data.get("source", "")
     p = paths(project_root(data.get("cwd")))
-    if p["vault_existe"]:
-        ctx = "Este projeto tem vault Obsidian em %s (memória do projeto). Use o plugin obsidian-memory para ler e gravar." % p["vault"]
+    if p["vault_exists"]:
+        ctx = "This project has an Obsidian vault at %s (project memory). Use the obsidian-memory plugin to read and write it." % p["vault"]
         if has_root_import(p["project_root"]) and source != "compact":
-            ctx += "\n(%s já é carregado via @import no CLAUDE.md da raiz.)" % p["claude_md"]
+            ctx += "\n(%s is already loaded via @import in the root CLAUDE.md.)" % p["claude_md"]
         else:
             ctx += "\n\n=== %s ===\n%s" % (p["claude_md"], read_capped(p["claude_md"], CONTEXT_LIMIT))
         last = latest_session(p["vault"])
         if last:
-            ctx += "\n\n=== Última sessão: %s ===\n%s" % (last, read_capped(last, 6000))
+            ctx += "\n\n=== Last session: %s ===\n%s" % (last, read_capped(last, 6000))
         if source == "compact":
-            ctx += ("\n\nA conversa acabou de ser compactada (o transcript completo já foi arquivado). "
-                    "Ao final da próxima resposta, registre no sessao-*.md de hoje e no Current State o que foi feito "
-                    "antes da compactação, usando o resumo da compactação.")
+            ctx += ("\n\nThe conversation was just compacted (the full transcript is already archived). "
+                    "At the end of your next response, record in today's session-*.md and in Current State what was "
+                    "done before the compaction, using the compaction summary.")
         ctx += alerts(p["vault"])
     else:
-        ctx = ("Este projeto (%s) ainda não tem .obsidian-vault/. Ele é criado automaticamente ao fim da sessão; "
-               "para criá-lo agora (com git e Obsidian), use o plugin obsidian-memory: init." % p["project_root"])
+        ctx = ("This project (%s) has no .obsidian-vault/ yet. It is created automatically at session end; "
+               "to create it now (with git and Obsidian), use the obsidian-memory plugin: init." % p["project_root"])
     print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": ctx}}))
 
 
 def cmd_status(root):
     p = paths(root)
     v = p["vault"]
-    out = ["Projeto: %s" % root, "Vault: %s (%s)" % (v, "existe" if p["vault_existe"] else "NÃO existe — rode init")]
+    out = ["Project: %s" % root, "Vault: %s (%s)" % (v, "exists" if p["vault_exists"] else "does NOT exist — run init")]
     if is_git(root):
         _, branch, _ = sh(["git", "-C", root, "branch", "--show-current"])
         _, last, _ = sh(["git", "-C", root, "log", "-1", "--format=%h %cr — %s", "--", v])
         _, pend, _ = sh(["git", "-C", root, "status", "--porcelain", "--", v])
-        out.append("Git: branch %s · último commit do vault: %s · mudanças pendentes no vault: %d"
-                   % (branch or "?", last or "nenhum", len(pend.splitlines()) if pend else 0))
+        out.append("Git: branch %s · last vault commit: %s · pending vault changes: %d"
+                   % (branch or "?", last or "none", len(pend.splitlines()) if pend else 0))
     else:
-        out.append("Git: sem repositório (init cria um)")
+        out.append("Git: no repository (init creates one)")
     if obsidian_installed():
-        vid = obsidian_vault_id(v) if p["vault_existe"] else None
-        out.append("Obsidian: %s · app %s" % ("vault registrado" if vid else "vault não registrado",
-                                              "aberto" if obsidian_running() else "fechado"))
+        vid = obsidian_vault_id(v) if p["vault_exists"] else None
+        out.append("Obsidian: %s · app %s" % ("vault registered" if vid else "vault not registered",
+                                              "running" if obsidian_running() else "closed"))
     else:
-        out.append("Obsidian: não instalado (rode doctor / open para abrir a página de download)")
-    if p["vault_existe"]:
-        out.append("Última sessão: %s" % (latest_session(v) or "nenhuma"))
+        out.append("Obsidian: not installed (run doctor / open to open the download page)")
+    if p["vault_exists"]:
+        out.append("Last session: %s" % (latest_session(v) or "none"))
         s = load_state(v)
-        if s.get("ultimo_arquivamento"):
-            out.append("Último arquivamento automático: %(quando)s (%(motivo)s)" % s["ultimo_arquivamento"])
+        if s.get("last_archive"):
+            out.append("Last automatic archive: %(when)s (%(reason)s)" % s["last_archive"])
         a = alerts(v).strip()
         if a:
             out.append(a)
-    out.append("Hoje: pasta %s · sufixo %s" % (p["pasta_hoje"], p["sufixo_sessao"]))
+    out.append("Today: folder %s · suffix %s" % (p["today_dir"], p["session_suffix"]))
     print("\n".join(out))
 
 
@@ -887,17 +888,17 @@ def main():
         try:
             cmd_status(root)
         except Exception as e:  # never fail the skill's context injection
-            print("status indisponível: %s" % e)
+            print("status unavailable: %s" % e)
     elif cmd == "init":
         name = pop_opt(args, "--name")
         no_git = pop_opt(args, "--no-git", False)
         no_obs = pop_opt(args, "--no-obsidian", False)
         result = {"project_root": root}
         if excluded(root):
-            result["aviso"] = "Pasta excluída (home, Downloads, Desktop, Documents, tmp). Use --cwd com a pasta do projeto."
+            result["warning"] = "Excluded folder (home, Downloads, Desktop, Documents, tmp). Use --cwd with the project folder."
             emit(result)
             return
-        result["vault_criado"] = not os.path.isfile(os.path.join(root, VAULT_DIR, "CLAUDE.md"))
+        result["vault_created"] = not os.path.isfile(os.path.join(root, VAULT_DIR, "CLAUDE.md"))
         result["vault"] = init_vault(root, name)
         if not no_git:
             result["git_init"] = git_init(root)
@@ -909,7 +910,7 @@ def main():
         msg = pop_opt(args, "-m") or "vault: save %s" % dt.datetime.now().strftime("%d-%m-%Y %H:%M")
         v = os.path.join(root, VAULT_DIR)
         if not os.path.isfile(os.path.join(v, "CLAUDE.md")):
-            emit({"erro": "sem vault; rode init"})
+            emit({"error": "no vault; run init"})
             return
         build_index(v)
         emit(git_commit(root, msg))
@@ -924,7 +925,7 @@ def main():
         build_index(v)
         print(os.path.join(v, "_index.md"))
     else:
-        sys.exit("comando desconhecido: %s" % cmd)
+        sys.exit("unknown command: %s" % cmd)
 
 
 if __name__ == "__main__":

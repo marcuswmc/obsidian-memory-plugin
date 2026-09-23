@@ -1,18 +1,18 @@
 ---
-tipo: retro
-status: rascunho
-data: {{date:DD-MM-YYYY}}
+type: retro
+status: draft
+date: {{date:DD-MM-YYYY}}
 tags: [claude/retro]
 ---
 # {{title}}
 
-Contexto: [[CLAUDE]]
+Context: [[CLAUDE]]
 
-## O que funcionou
+## What worked
 
-## O que não funcionou
+## What did not work
 
-## Lições
+## Lessons
 
-## Ações
+## Actions
 - [ ] 

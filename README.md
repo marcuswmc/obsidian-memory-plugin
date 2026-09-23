@@ -1,80 +1,82 @@
-# Obsidian Memory — plugin para Claude Code
+# Obsidian Memory — a Claude Code plugin
 
-Dá a cada projeto uma memória persistente num vault Obsidian: `<projeto>/.obsidian-vault/`. Nele ficam o CLAUDE.md de contexto, o histórico de sessões, specs, planos, processos, decisões (ADRs), bugs e retrospectivas. O vault é versionado no git do próprio projeto.
+Gives every project persistent memory in an Obsidian vault: `<project>/.obsidian-vault/`. It holds the context `CLAUDE.md`, session history, specs, plans, processes, decisions (ADRs), bugs and retrospectives. The vault is versioned in the project's own git repository.
 
-- **Menos tokens:** para retomar, carrega só o `CLAUDE.md` e o resumo da última sessão (alguns KB), em vez de reconstruir o contexto.
-- **Memória fora da janela:** o vault cresce no disco, e o Claude lê o que precisa quando precisa.
-- **Automático:** hooks arquivam cada sessão e comitam o vault (só o vault, sem push, com verificação de segredos).
+- **Fewer tokens:** to resume, Claude loads only `CLAUDE.md` and the last session summary (a few KB) instead of rebuilding context.
+- **Memory outside the context window:** the vault grows on disk, and Claude reads what it needs when it needs it.
+- **Automatic:** hooks archive every session and commit the vault (only the vault, never pushed, with a secret scan).
 
-## Requisitos
+> Notes are written in your conversation language; dates use the `dd-mm-yyyy` format.
+
+## Requirements
 
 | | macOS | Linux | Windows |
 |---|---|---|---|
 | Claude Code | ✔ | ✔ | ✔ |
-| Python 3.8+ | `python3` | `python3` | `python` ou `py -3` |
-| git | ✔ | ✔ | **Git for Windows** (traz o Git Bash, usado pelos hooks) |
-| Obsidian Desktop | opcional | opcional | opcional |
+| Python 3.8+ | `python3` | `python3` | `python` or `py -3` |
+| git | ✔ | ✔ | **Git for Windows** (provides Git Bash, used by the hooks) |
+| Obsidian Desktop | optional | optional | optional |
 
-Rode `/obsidian-memory:vault doctor` para conferir. O que faltar pode ser instalado pelo próprio plugin (`winget`, `brew` ou `flatpak`), **sempre com a sua aprovação**. Se o Obsidian não for encontrado, a página de download (https://obsidian.md/download) é aberta.
+Run `/obsidian-memory:vault doctor` to check. Anything missing can be installed by the plugin itself (`winget`, `brew` or `flatpak`), **always with your approval**. If Obsidian isn't found, its download page (https://obsidian.md/download) opens.
 
-## Instalação
+## Installation
 
-**Pelo GitHub (recomendado):** dentro do Claude Code, rode:
+**From GitHub (recommended):** inside Claude Code, run:
 ```
 /plugin marketplace add marcuswmc/obsidian-memory-plugin
 /plugin install obsidian-memory@obsidian-memory
 ```
 
-**Manual:** clone ou copie este repositório para `~/.claude/skills/obsidian-memory/` (no Windows, `%USERPROFILE%\.claude\skills\obsidian-memory\`). Como a pasta tem `.claude-plugin/plugin.json`, o Claude Code a carrega como plugin (`obsidian-memory@skills-dir`) na próxima sessão.
+**Manual:** clone or copy this repository to `~/.claude/skills/obsidian-memory/` (on Windows, `%USERPROFILE%\.claude\skills\obsidian-memory\`). Because the folder contains `.claude-plugin/plugin.json`, Claude Code loads it as a plugin (`obsidian-memory@skills-dir`) in the next session.
 
-Use **só um** dos dois métodos, porque com os dois instalados os hooks rodam em dobro. Depois, reinicie o Claude Code (ou rode `/reload-plugins`) e confira com `/obsidian-memory:vault doctor`.
+Use **only one** of the two methods: with both installed, the hooks run twice. Then restart Claude Code (or run `/reload-plugins`) and check with `/obsidian-memory:vault doctor`.
 
-Os hooks vêm no próprio plugin (`hooks/hooks.json`), então não é preciso editar o `settings.json`.
+The hooks ship with the plugin (`hooks/hooks.json`), so there's no need to edit `settings.json`.
 
 ### Windows
-- Instale o [Git for Windows](https://git-scm.com/downloads/win). Os hooks rodam `bash scripts/vault …`, e o Git Bash é o que fornece o `bash`. Se o Claude Code não achar o Git Bash, defina `CLAUDE_CODE_GIT_BASH_PATH` (por exemplo `C:\Program Files\Git\bin\bash.exe`) no `env` do `settings.json`.
-- O lançador `scripts/vault` usa `python3`, `python` ou `py -3`, nessa ordem, e ignora o atalho da Microsoft Store que não é um Python de verdade.
-- Tudo é lido e gravado em UTF-8.
-- O Obsidian é procurado em `%LOCALAPPDATA%\Programs\Obsidian` e a configuração dele em `%APPDATA%\obsidian\obsidian.json`.
+- Install [Git for Windows](https://git-scm.com/downloads/win). The hooks run `bash scripts/vault …`, and Git Bash is what provides `bash`. If Claude Code can't find Git Bash, set `CLAUDE_CODE_GIT_BASH_PATH` (for example `C:\Program Files\Git\bin\bash.exe`) in the `env` block of `settings.json`.
+- The `scripts/vault` launcher tries `python3`, `python` and `py -3`, in that order, and skips the Microsoft Store shortcut that isn't a real Python.
+- Everything is read and written as UTF-8.
+- Obsidian is looked up in `%LOCALAPPDATA%\Programs\Obsidian`, and its configuration in `%APPDATA%\obsidian\obsidian.json`.
 
-## Uso
+## Usage
 
-| Comando | O que faz |
+| Command | What it does |
 |---|---|
-| `/obsidian-memory:vault init` | Cria o vault, faz `git init` se necessário, comita e abre no Obsidian |
-| `/obsidian-memory:vault save` | Escreve o resumo da sessão, atualiza o Current State e comita o vault |
-| `/obsidian-memory:vault status` | Mostra o estado do vault, do git, do Obsidian e os alertas |
-| `/obsidian-memory:vault open` | Registra e abre o vault no Obsidian (pergunta antes de reiniciar o app) |
-| `/obsidian-memory:vault doctor` | Verifica os requisitos e oferece instalar o que faltar |
+| `/obsidian-memory:vault init` | Creates the vault, runs `git init` if needed, commits and opens it in Obsidian |
+| `/obsidian-memory:vault save` | Writes the session summary, updates Current State and commits the vault |
+| `/obsidian-memory:vault status` | Shows the state of the vault, git, Obsidian, and any alerts |
+| `/obsidian-memory:vault open` | Registers the vault in Obsidian and opens it (asks before restarting the app) |
+| `/obsidian-memory:vault doctor` | Checks requirements and offers to install anything missing |
 
-Também funciona pedindo em linguagem natural: "salva a sessão", "registra essa decisão", "onde paramos?".
+It also works with plain-language requests: "save the session", "record this decision", "where did we leave off?".
 
 ## Hooks
 
-| Evento | Ação |
+| Event | Action |
 |---|---|
-| SessionStart | Injeta a última sessão e os alertas; depois de uma compactação, reinjeta também o CLAUDE.md |
-| PreCompact | Arquiva o transcript e comita o vault antes da compactação |
-| SessionEnd | Arquiva o transcript e a memória e comita o vault |
+| SessionStart | Injects the last session and any alerts; after a compaction, also re-injects `CLAUDE.md` |
+| PreCompact | Archives the transcript and commits the vault before compaction |
+| SessionEnd | Archives the transcript and memory, and commits the vault |
 
-## Garantias
+## Guarantees
 
-- Os commits incluem **somente** `.obsidian-vault/`. O que você deixou em stage não é tocado, e nunca há push.
-- Transcripts e cópias da memória ficam fora do git (`.obsidian-vault/.gitignore`).
-- Antes de cada commit, o script procura segredos. Se achar algo, não comita e mostra um alerta no próximo início de sessão.
-- Nenhum vault é criado automaticamente em home, Downloads, Desktop, Documents, pastas temporárias ou na raiz de um disco.
-- Nada é instalado e o Obsidian nunca é reiniciado sem a sua aprovação.
+- Commits include **only** `.obsidian-vault/`. Whatever you have staged is left untouched, and nothing is ever pushed.
+- Transcripts and memory snapshots stay out of git (`.obsidian-vault/.gitignore`).
+- Before each commit, the script scans for secrets. If it finds any, it doesn't commit and shows an alert at the start of the next session.
+- No vault is ever created automatically in your home folder, Downloads, Desktop, Documents, temp folders or a drive root.
+- Nothing is installed and Obsidian is never restarted without your approval.
 
-## Configuração (`scripts/vault.py`)
+## Configuration (`scripts/vault.py`)
 
-| Constante | Padrão |
+| Constant | Default |
 |---|---|
 | `VAULT_DIR` | `.obsidian-vault` |
-| `CONTEXT_LIMIT` | 12000 caracteres injetados |
-| `SECRET_PATTERNS` | padrões de segredos verificados antes do commit |
-| `OBSIDIAN_CONFIG` | configuração inicial do `.obsidian/` (Daily Notes, Templates) |
-| `excluded()` | pastas onde o vault nunca é criado |
+| `CONTEXT_LIMIT` | 12,000 characters injected |
+| `SECRET_PATTERNS` | secret patterns checked before each commit |
+| `OBSIDIAN_CONFIG` | initial `.obsidian/` settings (Daily Notes, Templates) |
+| `excluded()` | folders where a vault is never created |
 
-## Licença
+## License
 
 MIT

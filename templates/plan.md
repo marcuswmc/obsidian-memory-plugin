@@ -1,20 +1,18 @@
 ---
-type: bug
+type: plan
 status: draft
 date: {{date:DD-MM-YYYY}}
-tags: [claude/bug]
+tags: [claude/plan]
 ---
 # {{title}}
 
 Context: [[CLAUDE]]
 
-## Symptom
+## Goal
 
-## Reproduction
-1. 
+## Steps
+- [ ] 
 
-## Cause
-
-## Fix
+## Risks
 
 ## Status

@@ -4,14 +4,14 @@
     "name": "Marcus Silva"
   },
   "metadata": {
-    "description": "Marketplace do plugin Obsidian Memory"
+    "description": "Marketplace for the Obsidian Memory plugin"
   },
   "plugins": [
     {
       "name": "obsidian-memory",
       "source": "./",
-      "description": "Memória persistente por projeto para o Claude Code: um vault Obsidian (.obsidian-vault/) com CLAUDE.md de contexto, histórico de sessões, specs, planos, decisões e commits automáticos do vault.",
-      "version": "1.1.0"
+      "description": "Persistent per-project memory for Claude Code: an Obsidian vault (.obsidian-vault/) with a context CLAUDE.md, session history, specs, plans, decisions and automatic vault commits.",
+      "version": "1.2.0"
     }
   ]
 }
