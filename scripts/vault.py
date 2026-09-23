@@ -370,6 +370,8 @@ def git_commit(root, message, extra_paths=None):
     v = os.path.join(root, VAULT_DIR)
     if not is_git(root):
         return {"git": "no-repository"}
+    if sh(["git", "-C", root, "check-ignore", "-q", v])[0] == 0:
+        return {"git": "vault-ignored-by-project"}  # the project chose to keep its vault out of git
     ensure_gitignore(v)  # keeps older vaults up to date (e.g. .obsidian/plugins/)
     specs = [v] + [p for p in (extra_paths or []) if os.path.exists(p)]
     code, _, err = sh(["git", "-C", root, "add", "-A", "--"] + specs)

@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.1 — 23-09-2026
+- Fix: when a project ignores its own `.obsidian-vault/` in `.gitignore`, the vault commit is skipped (`vault-ignored-by-project`) instead of failing with an error on every save and session end.
+
 ## 1.2.0 — 23-09-2026
 - Everything in English: README, skill instructions, script messages and JSON keys, note templates, generated `CLAUDE.md` model and manifests.
 - Renamed files: `session-*.md` (was `sessao-*.md`), `memory/` (was `memoria/`), templates `decision`, `plan`, `process`, `session`, `daily-note`. Older vaults keep working: `sessao-*.md` is still read as a session and `memoria/` stays out of git.
