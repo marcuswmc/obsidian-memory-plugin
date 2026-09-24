@@ -50,7 +50,7 @@ FOLDERS = ["daily", "specs", "plans", "processes", "decisions", "bugs", "retro"]
 HOME = os.path.expanduser("~")
 CONTEXT_LIMIT = 12000
 STATE_FILE = ".state.json"
-SETTINGS_FILE = ".obsidian-memory.json"  # choices made at init (git, obsidian)
+SETTINGS_FILE = ".obsidian-memory.json"  # choices made at init (git, obsidian) and the user's time zone
 FALLBACK_IDENTITY = ["-c", "user.name=Obsidian Memory", "-c", "user.email=obsidian-memory@localhost"]
 
 REMINDER_RE = re.compile(r"<system-reminder>.*?</system-reminder>", re.S)
@@ -305,6 +305,30 @@ def save_settings(v, **kw):
     s = read_json(p, {})
     s.update(kw)
     write_json(p, s)
+
+
+def local_timezone():
+    """IANA name of this machine's time zone (e.g. Europe/Lisbon), or None when it can't be told (Windows)."""
+    tz = os.environ.get("TZ", "").lstrip(":")
+    if "/" in tz and not tz.startswith("/"):
+        return tz
+    target = os.path.realpath("/etc/localtime")
+    if "zoneinfo/" in target:
+        return target.split("zoneinfo/", 1)[1]
+    try:
+        with uopen("/etc/timezone") as f:
+            return f.read().strip() or None
+    except OSError:
+        return None
+
+
+def ensure_timezone(v):
+    """Record the user's time zone once, so tools without a local clock (Cowork) write local times."""
+    if read_json(os.path.join(v, SETTINGS_FILE), {}).get("timezone"):
+        return
+    tz = local_timezone()
+    if tz:
+        save_settings(v, timezone=tz)
 
 
 def has_root_import(root):
@@ -814,6 +838,7 @@ def cmd_archive():
     if n_user == 0:
         return
     v = init_vault(root, obsidian=load_settings(os.path.join(root, VAULT_DIR))["obsidian"])
+    ensure_timezone(v)
     day = start.strftime(DATE_FMT)
     ddir = os.path.join(v, "daily", day)
     os.makedirs(ddir, exist_ok=True)
@@ -1006,6 +1031,8 @@ def cmd_status(root):
     else:
         out.append("Obsidian: not installed (run doctor / open to open the download page)")
     if p["vault_exists"]:
+        tz = read_json(os.path.join(v, SETTINGS_FILE), {}).get("timezone")
+        out.append("Time zone: %s" % (tz or "not recorded yet (set on the next save)"))
         out.append("Last session: %s" % (latest_session(v) or "none"))
         s = load_state(v)
         if s.get("last_archive"):
@@ -1053,6 +1080,7 @@ def main():
         info = paths(root)
         if info["vault_exists"]:
             info["settings"] = load_settings(info["vault"])
+            info["settings"]["timezone"] = read_json(os.path.join(info["vault"], SETTINGS_FILE), {}).get("timezone")
         emit(info)
     elif cmd == "status":
         try:
@@ -1078,6 +1106,7 @@ def main():
             settings["obsidian"] = bool(want_obs and not no_obs)
         v = result["vault"] = init_vault(root, name, obsidian=settings["obsidian"])
         save_settings(v, **settings)
+        ensure_timezone(v)
         result["settings"] = settings
         if settings["git"]:
             result["git_init"] = git_init(root)
@@ -1097,6 +1126,7 @@ def main():
         if not os.path.isfile(os.path.join(v, "CLAUDE.md")):
             emit({"error": "no vault; run init"})
             return
+        ensure_timezone(v)
         build_index(v)
         emit(git_commit(root, msg))
     elif cmd == "open":

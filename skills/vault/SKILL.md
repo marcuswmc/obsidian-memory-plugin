@@ -70,7 +70,7 @@ Git and Obsidian are **optional**. With neither, the vault is still created and 
    - **`obsidian: not-installed`:** the download page is open. After the user installs it, run `open`.
 6. Explore the project (README, manifests such as package.json or pyproject, the folder tree, `git log` if there is one) and fill in the CLAUDE.md following the model below. Then run `save -m "vault: initial context"`.
 
-**Changing a choice later:** `init --git` / `init --no-git` / `init --obsidian` / `init --no-obsidian` on an existing vault. The choices live in `obsidian-vault/.obsidian-memory.json`.
+**Changing a choice later:** `init --git` / `init --no-git` / `init --obsidian` / `init --no-obsidian` on an existing vault. The choices live in `obsidian-vault/.obsidian-memory.json`, along with `timezone` (this computer's zone, recorded by the script; the Cowork plugin uses it). Don't remove it.
 
 ## Obsidian
 `open` registers `obsidian-vault/` as a vault and opens it on `CLAUDE.md`. Each `obsidian-vault/` is a vault of its own. If the user opens the whole project (or a folder above it) as an Obsidian vault, `obsidian-vault/` becomes a vault inside a vault, which Obsidian advises against: suggest opening `obsidian-vault/` itself instead. If Obsidian is running and the vault isn't registered yet, the app has to restart, and that **needs the user's permission every time**. A backup of Obsidian's config is kept at `obsidian.json.bak-obsidian-memory`.

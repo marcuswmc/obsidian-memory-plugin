@@ -52,7 +52,7 @@ Cowork doesn't run hooks or scripts reliably, so it gets a separate plugin, `obs
 - **Resume:** in a session whose folder has `obsidian-vault/`, Claude loads the skill, reads `CLAUDE.md` and the latest session note, and picks up from there. Ask "where did we leave off?" to check.
 - **Save:** Claude writes the session note as the work goes (Cowork has no session-end hook) and updates Current State. Say "save the session" to wrap up.
 - **Create a vault:** "create the project memory" makes a vault without git or Obsidian. You can turn them on later with `/obsidian-memory:vault init --git --obsidian` in Claude Code.
-- **Time zone:** Cowork may run on a remote machine in UTC. The first time it saves, Claude asks for your time zone and stores it as `timezone` in `obsidian-vault/.obsidian-memory.json`; dates and times in notes use it.
+- **Time zone:** Cowork may run on a remote machine in UTC. Dates and times in notes use the `timezone` in `obsidian-vault/.obsidian-memory.json`. Claude Code records it automatically; if it's missing, Claude asks for it once in Cowork.
 - **Commits:** the skill never runs git. If git is on for the vault, the next save or session end in Claude Code commits what Cowork wrote.
 - **Both installed:** the Code tab of the desktop app also loads plugins installed from Cowork. When the main plugin is active, the Cowork skill steps aside.
 
@@ -67,7 +67,7 @@ In your project, run `/obsidian-memory:vault init`. Claude asks two optional que
 
 Answer no to both and you get just the vault folder. Then Claude explores the project and fills in `CLAUDE.md`. From the next session on, it starts with that context.
 
-You can change your mind later with `init --git`, `--no-git`, `--obsidian` or `--no-obsidian`. The choices are stored in `obsidian-vault/.obsidian-memory.json`.
+You can change your mind later with `init --git`, `--no-git`, `--obsidian` or `--no-obsidian`. The choices are stored in `obsidian-vault/.obsidian-memory.json`, together with your computer's time zone (used by the Cowork plugin to write local times).
 
 Projects without a vault are never touched: memory only starts with `init`.
 
@@ -115,7 +115,7 @@ obsidian-vault/
 ├── specs/ plans/ processes/ decisions/ bugs/ retro/
 ├── templates/              # note templates for Obsidian's Templates plugin, only when Obsidian is on
 ├── .obsidian/              # Obsidian settings (Daily Notes, Templates), only when Obsidian is on
-└── .obsidian-memory.json   # your init choices (git, obsidian)
+└── .obsidian-memory.json   # your init choices (git, obsidian) and your time zone
 ```
 
 ## Guarantees

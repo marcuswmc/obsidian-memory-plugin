@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.4.2 — 24-09-2026
+- The vault records this computer's time zone (IANA name, e.g. `Europe/Lisbon`) as `timezone` in `obsidian-vault/.obsidian-memory.json`, on `init`, `save` and at session end, only when it isn't set yet. The Cowork plugin uses it to write local times from machines that run in UTC. `status` and `info` show it. On Windows the zone can't be detected and is left for Cowork to ask.
+
 ## obsidian-memory-cowork 1.0.1 — 24-09-2026
 - Explicit time zone: the vault stores the user's IANA zone as `timezone` in `.obsidian-memory.json`, and session notes, day folders and `Last updated` use it. Cowork may run on a remote machine in UTC, so the skill no longer trusts the machine's clock: it asks for the zone once when it isn't set, computes the time with `TZ=<zone> date`, and falls back to UTC plus the zone's offset when the machine doesn't know the zone.
 
