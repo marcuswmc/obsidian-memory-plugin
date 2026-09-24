@@ -17,7 +17,7 @@
       "name": "obsidian-memory-cowork",
       "source": "./cowork",
       "description": "Persistent per-project memory for Claude Cowork: reads and writes the same obsidian-vault/ used by the Obsidian Memory plugin for Claude Code, with file tools only (no hooks, scripts or git).",
-      "version": "1.0.0"
+      "version": "1.0.1"
     }
   ]
 }

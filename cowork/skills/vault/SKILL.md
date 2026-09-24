@@ -36,11 +36,11 @@ There is no session-end hook in Cowork, and the session can close at any time. S
 - Update `Current State` in `CLAUDE.md` when the state really changes (something starts working, gets blocked, or the focus moves).
 
 ## 4. Save (`save`, "save the session", or when the session is wrapping up)
-1. Get the date and time: run `date "+%d-%m-%Y %Hh%M"` if you can run commands. Cowork may run on a remote machine in UTC: if the environment shows the user's local date or time and it differs, use the user's. Without commands, use the date from the environment.
+1. Get the date and time **in the user's time zone** (see **Time zone**). Use them for the day folder, the note's file name and header, and `Last updated`.
 2. Session note: `obsidian-vault/daily/<dd-mm-yyyy>/session-<HHhMM>.md`, from `templates/session.md` (see **Notes**), with the sections Request, What was done, Decisions and why, Files created/changed, and Where it stopped / next steps. If you already created one in this session, update it instead of creating another. Create the day folder if needed.
 3. `CLAUDE.md`: update `**Last updated:**`, `### Working`, `### Broken / Blocked`, `### Focus right now`, and any new Key Decisions and Do Not rules. Current State is **replaced, not appended**: history goes to `daily/`. Keep the file under 150 lines.
 4. Add the new notes to `obsidian-vault/_index.md` (see **Index**).
-5. Tell the user what was saved, in one or two lines. Don't commit: the next save in Claude Code commits the vault if git is on.
+5. Tell the user what was saved, in one or two lines, including the time and the zone used (e.g. "session-14h19, America/Sao_Paulo"). Don't commit: the next save in Claude Code commits the vault if git is on.
 
 ## 5. Init (create the vault)
 Only with the user's approval, and only in a real project folder (see step 1).
@@ -54,7 +54,7 @@ Only with the user's approval, and only in a real project folder (see step 1).
      Quick captures. Move them to specs/, plans/, decisions/ or bugs/ when it makes sense.
      ```
    - The folders `daily/`, `specs/`, `plans/`, `processes/`, `decisions/`, `bugs/`, `retro/`, each with an empty `.gitkeep`.
-   - `obsidian-vault/.obsidian-memory.json` with `{"git": false, "obsidian": false}`.
+   - `obsidian-vault/.obsidian-memory.json` with `{"git": false, "obsidian": false, "timezone": "<the user's IANA zone>"}` (see **Time zone**).
    - `obsidian-vault/.gitignore` with these lines:
      ```
      .obsidian/workspace*.json
@@ -79,7 +79,15 @@ Only with the user's approval, and only in a real project folder (see step 1).
 6. Tell the user that git versioning and Obsidian can be turned on later with `/obsidian-memory:vault init --git --obsidian` in Claude Code.
 
 ## 6. Status (`status`)
-Summarize in a few lines: vault path, `Last updated`, focus right now, the date of the last session note, and the settings in `.obsidian-memory.json` (missing file means git and Obsidian on).
+Summarize in a few lines: vault path, `Last updated`, focus right now, the date of the last session note, the time zone, and the settings in `.obsidian-memory.json` (missing file means git and Obsidian on; missing `timezone` means it hasn't been set yet).
+
+## Time zone
+Cowork may run on a remote machine whose clock is in UTC, so `date` alone can give the wrong hour or even the wrong day. Always write dates and times in the **user's** time zone, stored in the vault:
+1. Read `timezone` in `obsidian-vault/.obsidian-memory.json`. It is an IANA name such as `America/Sao_Paulo` or `Europe/Lisbon`.
+2. **Not set yet:** ask the user once which time zone they are in, suggesting one if the environment, the conversation or the user's local time hints at it. Save the answer as `"timezone"` in `.obsidian-memory.json`, keeping the other keys. Don't guess silently and don't assume UTC.
+3. **Get the time:** run `TZ="<timezone>" date "+%d-%m-%Y %Hh%M %Z %z"`.
+4. **Check it:** if the zone isn't UTC but the output shows `+0000`, the machine doesn't know that zone (the time came out in UTC). Then take the UTC time (`date -u "+%d-%m-%Y %H:%M"`) and apply the zone's current offset yourself (e.g. `America/Sao_Paulo` is UTC−3), including when that changes the day.
+5. **No commands available:** use the user's local date and time from the environment if shown; otherwise ask the user for the current time rather than inventing one.
 
 ## Notes
 To create a note, use the matching template: the vault's own `obsidian-vault/templates/` when it exists (the user may have customized it), otherwise the `templates/` folder of this skill. Replace `{{title}}`, `{{date:DD-MM-YYYY}}` and `{{time:HH:mm}}` with real values.

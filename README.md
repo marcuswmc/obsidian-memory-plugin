@@ -52,6 +52,7 @@ Cowork doesn't run hooks or scripts reliably, so it gets a separate plugin, `obs
 - **Resume:** in a session whose folder has `obsidian-vault/`, Claude loads the skill, reads `CLAUDE.md` and the latest session note, and picks up from there. Ask "where did we leave off?" to check.
 - **Save:** Claude writes the session note as the work goes (Cowork has no session-end hook) and updates Current State. Say "save the session" to wrap up.
 - **Create a vault:** "create the project memory" makes a vault without git or Obsidian. You can turn them on later with `/obsidian-memory:vault init --git --obsidian` in Claude Code.
+- **Time zone:** Cowork may run on a remote machine in UTC. The first time it saves, Claude asks for your time zone and stores it as `timezone` in `obsidian-vault/.obsidian-memory.json`; dates and times in notes use it.
 - **Commits:** the skill never runs git. If git is on for the vault, the next save or session end in Claude Code commits what Cowork wrote.
 - **Both installed:** the Code tab of the desktop app also loads plugins installed from Cowork. When the main plugin is active, the Cowork skill steps aside.
 

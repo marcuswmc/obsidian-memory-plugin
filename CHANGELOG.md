@@ -1,5 +1,8 @@
 # Changelog
 
+## obsidian-memory-cowork 1.0.1 — 24-09-2026
+- Explicit time zone: the vault stores the user's IANA zone as `timezone` in `.obsidian-memory.json`, and session notes, day folders and `Last updated` use it. Cowork may run on a remote machine in UTC, so the skill no longer trusts the machine's clock: it asks for the zone once when it isn't set, computes the time with `TZ=<zone> date`, and falls back to UTC plus the zone's offset when the machine doesn't know the zone.
+
 ## obsidian-memory-cowork 1.0.0 — 24-09-2026
 - New companion plugin for Claude Cowork in `cowork/`, listed in the same marketplace. A single skill resumes from `obsidian-vault/` (CLAUDE.md and the latest session note), records decisions and notes, saves the session and can create a vault without git or Obsidian, using file tools only. It never runs git and steps aside when the Claude Code plugin is active.
 
