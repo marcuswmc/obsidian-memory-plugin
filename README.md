@@ -9,6 +9,8 @@ Gives every project persistent memory in an Obsidian vault: `<project>/obsidian-
 
 > Notes are written in your conversation language; dates use the `dd-mm-yyyy` format.
 
+🌐 **Website:** [obsidian-memory-site.vercel.app](https://obsidian-memory-site.vercel.app)
+
 📊 **Presentation (PDF, Portuguese):** [features, usage and token-savings benchmark](docs/apresentacao/obsidian-memory.pdf)
 
 ## Requirements
