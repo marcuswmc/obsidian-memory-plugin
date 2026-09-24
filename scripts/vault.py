@@ -196,12 +196,23 @@ def run_git_root(cwd):
 
 
 def _rewrite(path, old_name):
-    """Point references to old_name/ in a text file (root CLAUDE.md, project .gitignore) at VAULT_DIR/."""
+    """Point references to old_name/ in a text file (root CLAUDE.md, project .gitignore) at VAULT_DIR/.
+    A rewritten line that already exists in the file is dropped (a .gitignore listing both names)."""
     if not os.path.exists(path):
         return
     with uopen(path) as f:
         txt = f.read()
-    new = re.sub(r"(?<![.\w-])%s(?=/|$)" % re.escape(old_name), VAULT_DIR, txt, flags=re.M)
+    pat = re.compile(r"(?<![.\w-])%s(?=/|$)" % re.escape(old_name))
+    existing = set(l.strip() for l in txt.splitlines() if not pat.search(l))
+    lines = []
+    for line in txt.splitlines(True):
+        if pat.search(line):
+            line = pat.sub(VAULT_DIR, line)
+            if line.strip() and line.strip() in existing:
+                continue
+            existing.add(line.strip())
+        lines.append(line)
+    new = "".join(lines)
     if new != txt:
         with uopen(path, "w") as f:
             f.write(new)
@@ -215,7 +226,9 @@ def migrate_legacy(root):
         if os.path.isdir(old) and not os.path.exists(new):
             os.rename(old, new)
             _rewrite(os.path.join(root, "CLAUDE.md"), old_name)   # @import
-            _rewrite(os.path.join(new, "CLAUDE.md"), old_name)    # paths mentioned in the context file
+            # The vault's CLAUDE.md is prose: a blind rename turns notes about the migration itself into
+            # contradictions ("still in obsidian-vault/, will move to obsidian-vault/"). Claude fixes it instead.
+            save_state(new, migrated_from=old_name)
             _rewrite(os.path.join(root, ".gitignore"), old_name)  # vault kept out of git
             cfgp = obsidian_config_path()                         # Obsidian registration
             cfg = read_json(cfgp, {})
@@ -953,6 +966,13 @@ def cmd_context():
                     "At the end of your next response, record in today's session-*.md and in Current State what was "
                     "done before the compaction, using the compaction summary.")
         ctx += alerts(v)
+        st = load_state(v)
+        moved = st.pop("migrated_from", None)
+        if moved:
+            ctx += ("\n\nThe vault folder was just renamed from %s/ to %s/ (automatic migration). Its CLAUDE.md "
+                    "was left as is: before anything else, edit it so paths say %s/ and notes about the pending "
+                    "migration say it is done; then tell the user in one line." % (moved, VAULT_DIR, VAULT_DIR))
+            write_json(os.path.join(v, STATE_FILE), st)  # notify once
     else:
         ctx = ("obsidian-memory: this project (%s) has no %s/, so project memory is off. "
                "Don't bring it up unless the user asks about memory; to turn it on, use /obsidian-memory:vault init."

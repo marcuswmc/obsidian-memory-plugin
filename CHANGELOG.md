@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.1 — 24-09-2026
+- Fix: migrating from `.obsidian-vault/` left a duplicate `obsidian-vault/` line in a `.gitignore` that listed both names.
+- Fix: migration no longer rewrites the vault's `CLAUDE.md` word by word, which turned notes about the migration itself into contradictions. The next SessionStart tells Claude, once, to update the paths and the migration notes.
+
 ## 1.4.0 — 24-09-2026
 - The vault folder is now visible: `obsidian-vault/` (was `.obsidian-vault/`, hidden by Finder and file explorers). Existing vaults are renamed on first use, and the root `CLAUDE.md` import, the project's `.gitignore` entry and the Obsidian registration are updated. With git on, the rename is committed.
 - Claude Code only: Cowork support (1.3.0 and 1.3.1) was removed. Cowork will get a separate skill.

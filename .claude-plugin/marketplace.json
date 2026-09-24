@@ -11,7 +11,7 @@
       "name": "obsidian-memory",
       "source": "./",
       "description": "Persistent per-project memory for Claude Code: an Obsidian vault (obsidian-vault/) with a context CLAUDE.md, session history, specs, plans and decisions. Git and Obsidian are optional.",
-      "version": "1.4.0"
+      "version": "1.4.1"
     }
   ]
 }
