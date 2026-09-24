@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Obsidian Memory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0d14;
+    --panel: #17151f;
+    --panel-2: #1f1c2a;
+    --line: #2d2a3a;
+    --text: #ecebf3;
+    --muted: #9b98ab;
+    --violet: #a78bfa;
+    --violet-strong: #7c3aed;
+    --mint: #34d399;
+    --rose: #fb7185;
+    --amber: #fbbf24;
+  }
+  @page { size: 1280px 720px; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); font-family: Inter, -apple-system, "Helvetica Neue", sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  code, .mono { font-family: "JetBrains Mono", Menlo, monospace; }
+
+  .slide {
+    width: 1280px; height: 720px; padding: 64px 80px 56px;
+    position: relative; overflow: hidden; page-break-after: always; break-after: page;
+    background: radial-gradient(1200px 600px at 110% -10%, rgba(124,58,237,.16), transparent 60%), var(--bg);
+    display: flex; flex-direction: column;
+  }
+  .slide:last-child { page-break-after: auto; break-after: auto; }
+  .foot { position: absolute; left: 80px; right: 80px; bottom: 26px; display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); letter-spacing: .02em; }
+  .kicker { font-size: 14px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--violet); margin-bottom: 14px; }
+  h1 { font-size: 72px; line-height: 1.02; font-weight: 800; letter-spacing: -.03em; }
+  h2 { font-size: 44px; line-height: 1.1; font-weight: 700; letter-spacing: -.02em; margin-bottom: 28px; }
+  h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  p, li { font-size: 19px; line-height: 1.5; color: #cfcddc; }
+  .lead { font-size: 24px; line-height: 1.45; color: #cfcddc; max-width: 900px; }
+  .muted { color: var(--muted); }
+  .hl { color: var(--violet); }
+  .ok { color: var(--mint); }
+  .bad { color: var(--rose); }
+  .grid { display: grid; gap: 20px; }
+  .g2 { grid-template-columns: 1fr 1fr; }
+  .g3 { grid-template-columns: repeat(3, 1fr); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 24px 26px; }
+  .card p { font-size: 17px; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; background: rgba(167,139,250,.14); color: var(--violet); margin-bottom: 12px; }
+  .tag.mint { background: rgba(52,211,153,.14); color: var(--mint); }
+  .tag.rose { background: rgba(251,113,133,.14); color: var(--rose); }
+  pre { background: #0a0910; border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px; font-family: "JetBrains Mono", Menlo, monospace; font-size: 16px; line-height: 1.65; color: #d9d6e8; }
+  pre .c { color: #6f6b82; }
+  pre .p { color: var(--violet); }
+  table { width: 100%; border-collapse: collapse; font-size: 17px; }
+  th { text-align: left; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--line); color: #d7d5e3; vertical-align: top; }
+  td code { font-size: 15px; color: var(--violet); }
+  ul.clean { list-style: none; }
+  ul.clean li { padding-left: 26px; position: relative; margin-bottom: 10px; }
+  ul.clean li::before { content: ""; position: absolute; left: 4px; top: 11px; width: 8px; height: 8px; border-radius: 2px; background: var(--violet); transform: rotate(45deg); }
+
+  /* cover */
+  .cover { justify-content: center; background: radial-gradient(900px 520px at 85% 20%, rgba(124,58,237,.35), transparent 60%), radial-gradient(700px 400px at 0% 110%, rgba(52,211,153,.10), transparent 60%), var(--bg); }
+  .logo { width: 76px; height: 76px; margin-bottom: 36px; }
+  .cover .lead { margin-top: 24px; }
+  .pills { display: flex; gap: 12px; margin-top: 40px; }
+  .pill { border: 1px solid var(--line); background: rgba(255,255,255,.03); border-radius: 999px; padding: 8px 16px; font-size: 15px; color: #cfcddc; }
+
+  .pill-os { border-color: rgba(52,211,153,.45); color: var(--mint); background: rgba(52,211,153,.08); }
+
+  /* bars */
+  .bar-row { display: grid; grid-template-columns: 190px 1fr 120px; align-items: center; gap: 16px; margin-bottom: 14px; }
+  .bar-label { font-size: 16px; color: #cfcddc; }
+  .bar-track { height: 30px; background: var(--panel-2); border-radius: 8px; overflow: hidden; }
+  .bar { height: 100%; border-radius: 8px; }
+  .bar.before { background: linear-gradient(90deg, #be4b5f, var(--rose)); }
+  .bar.after { background: linear-gradient(90deg, #1f9d74, var(--mint)); }
+  .bar-val { font-size: 17px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+  .metric-title { font-size: 14px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 18px 0 10px; }
+
+  .big { font-size: 64px; font-weight: 800; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .big.ok { color: var(--mint); }
+  .stat p { font-size: 16px; margin-top: 10px; }
+  .note { font-size: 13.5px; color: var(--muted); line-height: 1.5; margin-top: auto; padding-bottom: 20px; }
+
+  .tight h2 { margin-bottom: 20px; }
+  .tight .big { font-size: 50px; }
+  .tight .card { padding: 18px 22px; }
+  .tight td { padding: 8px 14px; font-size: 16px; }
+  .tight .tag { margin-bottom: 8px; }
+  .tight .note { padding-bottom: 28px; }
+
+  /* flow */
+  .flow { display: flex; align-items: stretch; gap: 0; margin-top: 8px; }
+  .step { flex: 1; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px 22px; }
+  .step .n { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--violet); margin-bottom: 10px; }
+  .step p { font-size: 16px; }
+  .arrow { width: 44px; display: flex; align-items: center; justify-content: center; color: var(--violet); font-size: 26px; }
+</style>
+</head>
+<body>
+
+<!-- 1 · Capa -->
+<section class="slide cover">
+  <svg class="logo" viewBox="0 0 64 64" fill="none">
+    <path d="M32 4 L54 18 L50 48 L32 60 L14 48 L10 18 Z" fill="url(#g)" />
+    <path d="M32 4 L38 30 L32 60 L26 30 Z" fill="rgba(255,255,255,.18)"/>
+    <defs><linearGradient id="g" x1="10" y1="4" x2="54" y2="60"><stop stop-color="#c4b5fd"/><stop offset="1" stop-color="#6d28d9"/></linearGradient></defs>
+  </svg>
+  <div class="kicker">Plugin open source para o Claude Code</div>
+  <h1>Obsidian Memory</h1>
+  <p class="lead">Memória persistente para cada projeto. O Claude retoma de onde parou, sem você explicar de novo e sem reler o código.</p>
+  <div class="pills">
+    <span class="pill">Markdown puro</span>
+    <span class="pill">Git e Obsidian opcionais</span>
+    <span class="pill">macOS · Linux · Windows</span>
+    <span class="pill pill-os">Open source · MIT</span>
+  </div>
+  <div class="foot"><span>github.com/marcuswmc/obsidian-memory-plugin</span><span>Código aberto · Licença MIT</span></div>
+</section>
+
+<!-- 2 · Problema -->
+<section class="slide">
+  <div class="kicker">O problema</div>
+  <h2>Cada sessão do agente começa do zero</h2>
+  <div class="grid g2" style="margin-top:6px">
+    <div class="card"><span class="tag rose">Retomar custa caro</span><h3>Você explica tudo de novo</h3><p>O que é o projeto, onde parou, o que já foi decidido. Depois o agente relê README, código e histórico do git para se orientar.</p></div>
+    <div class="card"><span class="tag rose">Compactação</span><h3>O contexto encolhe e some</h3><p>Em sessões longas, a conversa é resumida. Detalhes, motivos e próximos passos se perdem no resumo.</p></div>
+    <div class="card"><span class="tag rose">Decisões reabertas</span><h3>O "porquê" não está no código</h3><p>O código mostra o que foi feito, não por quê. O agente propõe de novo o que já foi descartado.</p></div>
+    <div class="card"><span class="tag rose">Tokens e tempo</span><h3>Tokens gastos só para se situar</h3><p>Cada leitura de arquivo é mais uma chamada ao modelo, que reprocessa todo o contexto. Isso acontece antes de começar o trabalho de verdade.</p></div>
+  </div>
+  <div class="foot"><span>Obsidian Memory</span><span>02</span></div>
+</section>
+
+<!-- 3 · Solução -->
+<section class="slide">
+  <div class="kicker">A solução</div>
+  <h2>Um vault de memória dentro de cada projeto</h2>
+  <div class="grid g2" style="grid-template-columns: 1.05fr 1fr; align-items:start">
+    <div>
+      <p class="lead" style="font-size:21px;margin-bottom:22px">A pasta <code class="hl">obsidian-vault/</code> fica junto do código. É Markdown puro: o Claude lê e escreve, e você pode abrir no Obsidian se quiser.</p>
+      <ul class="clean">
+        <li><b>CLAUDE.md de contexto</b>: projeto, stack, estado atual, decisões, mapa de arquivos e o que não fazer</li>
+        <li><b>Histórico por dia</b>: resumo de cada sessão e a conversa arquivada</li>
+        <li><b>Notas do projeto</b>: specs, planos, processos, decisões (ADRs), bugs e retros</li>
+      </ul>
+    </div>
+<pre><span class="p">obsidian-vault/</span>
+├── CLAUDE.md          <span class="c"># contexto do projeto</span>
+├── _index.md          <span class="c"># índice gerado</span>
+├── 00-inbox.md        <span class="c"># capturas rápidas</span>
+├── daily/24-09-2026/
+│   ├── session-10h40.md
+│   └── transcript-*.md <span class="c"># fora do git</span>
+├── specs/  plans/  processes/
+├── decisions/         <span class="c"># 0001-*.md …</span>
+├── bugs/  retro/
+└── .obsidian-memory.json</pre>
+  </div>
+  <div class="foot"><span>Obsidian Memory</span><span>03</span></div>
+</section>
+
+<!-- 4 · Como funciona -->
+<section class="slide">
+  <div class="kicker">Como funciona</div>
+  <h2>Os hooks cuidam do ciclo da sessão sozinhos</h2>
+  <div class="flow">
+    <div class="step"><div class="n">SessionStart</div><h3>Contexto pronto</h3><p>O <code>CLAUDE.md</code> do vault carrega pelo <code>@import</code>. O hook injeta o resumo da última sessão (ou o fim da conversa) e alertas.</p></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="n">Durante</div><h3>Leitura sob demanda</h3><p>Specs, decisões e sessões antigas só entram no contexto quando a tarefa precisa. O Claude registra notas novas.</p></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="n">PreCompact</div><h3>Nada se perde</h3><p>Antes de compactar, a conversa inteira é arquivada em <code>daily/</code>. Depois, o <code>CLAUDE.md</code> é reinjetado.</p></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="n">SessionEnd</div><h3>Arquivo e commit</h3><p>Arquiva a conversa, regenera o índice e comita só o vault (se o git estiver ligado). Nunca faz push.</p></div>
+  </div>
+  <p class="note" style="margin-top:34px">Os hooks só agem em projetos que têm vault. A memória começa quando você roda <code class="hl">init</code>, nunca antes.</p>
+  <div class="foot"><span>Obsidian Memory</span><span>04</span></div>
+</section>
+
+<!-- 5 · Funcionalidades -->
+<section class="slide">
+  <div class="kicker">Funcionalidades</div>
+  <h2>O que o plugin faz por você</h2>
+  <div class="grid g3">
+    <div class="card"><h3>Retomada sem ferramentas</h3><p>"Onde paramos?" é respondido direto do contexto injetado, sem ler arquivos.</p></div>
+    <div class="card"><h3>Arquivo automático</h3><p>Toda sessão é salva em <code>daily/</code>, com comandos e respostas, na compactação e no fim.</p></div>
+    <div class="card"><h3>Decisões registradas</h3><p>ADRs numerados e a seção "Do Not" evitam reabrir o que já foi decidido.</p></div>
+    <div class="card"><h3>Git opcional e seguro</h3><p>Commits locais só do vault, sem push. Verifica segredos antes de cada commit.</p></div>
+    <div class="card"><h3>Obsidian opcional</h3><p>Registra e abre o vault no Obsidian, com Daily Notes e Templates configurados.</p></div>
+    <div class="card"><h3>Doctor e instalação</h3><p>Confere Python, git, Obsidian e Git Bash. Instala o que falta, só com a sua aprovação.</p></div>
+  </div>
+  <div class="foot"><span>Obsidian Memory</span><span>05</span></div>
+</section>
+
+<!-- 6 · Instalação -->
+<section class="slide">
+  <div class="kicker">Instalação</div>
+  <h2>Dois comandos dentro do Claude Code</h2>
+  <div class="grid g2" style="grid-template-columns: 1.2fr 1fr; align-items:start">
+    <div>
+<pre><span class="c"># 1. adicionar o marketplace</span>
+<span class="p">/plugin</span> marketplace add marcuswmc/obsidian-memory-plugin
+
+<span class="c"># 2. instalar o plugin</span>
+<span class="p">/plugin</span> install obsidian-memory@obsidian-memory
+
+<span class="c"># 3. conferir os requisitos</span>
+<span class="p">/obsidian-memory:vault</span> doctor</pre>
+      <p class="note" style="margin-top:18px">Os hooks vêm com o plugin: não é preciso editar o <code>settings.json</code>. Depois de instalar, reinicie o Claude Code ou rode <code>/reload-plugins</code>.</p>
+    </div>
+    <table>
+      <tr><th>Requisito</th><th>macOS / Linux</th><th>Windows</th></tr>
+      <tr><td>Claude Code</td><td class="ok">obrigatório</td><td class="ok">obrigatório</td></tr>
+      <tr><td>Python 3.8+</td><td class="ok">obrigatório</td><td class="ok">obrigatório</td></tr>
+      <tr><td>git</td><td class="muted">opcional</td><td>Git for Windows (Git Bash roda os hooks)</td></tr>
+      <tr><td>Obsidian</td><td class="muted">opcional</td><td class="muted">opcional</td></tr>
+    </table>
+  </div>
+  <div class="foot"><span>Obsidian Memory</span><span>06</span></div>
+</section>
+
+<!-- 7 · Como usar -->
+<section class="slide">
+  <div class="kicker">Como usar</div>
+  <h2>Comece com <span class="hl">init</span>, e o resto é automático</h2>
+  <div class="grid g2" style="grid-template-columns: 1fr 1.25fr; align-items:start">
+    <div>
+      <p style="margin-bottom:16px">No seu projeto, rode <code class="hl">/obsidian-memory:vault init</code>. O Claude faz duas perguntas, ambas opcionais:</p>
+      <div class="card" style="margin-bottom:14px"><h3>1. Versionar o vault com git?</h3><p>Commits locais, só de <code>obsidian-vault/</code>. Se disser não num projeto com git, o vault vai para o <code>.gitignore</code>.</p></div>
+      <div class="card"><h3>2. Usar o Obsidian?</h3><p>Registra e abre o vault. Se não estiver instalado, oferece instalar.</p></div>
+      <p class="note" style="margin-top:14px">Depois ele explora o projeto e preenche o <code>CLAUDE.md</code>.</p>
+    </div>
+    <table>
+      <tr><th>Comando</th><th>O que faz</th></tr>
+      <tr><td><code>vault init</code></td><td>Cria o vault e pergunta sobre git e Obsidian</td></tr>
+      <tr><td><code>vault save</code></td><td>Resumo da sessão, atualiza o estado atual e comita</td></tr>
+      <tr><td><code>vault status</code></td><td>Estado do vault, git, Obsidian e alertas</td></tr>
+      <tr><td><code>vault open</code></td><td>Abre o vault no Obsidian</td></tr>
+      <tr><td><code>vault doctor</code></td><td>Confere e instala requisitos</td></tr>
+    </table>
+  </div>
+  <div class="foot"><span>Obsidian Memory</span><span>07</span></div>
+</section>
+
+<!-- 8 · Dia a dia -->
+<section class="slide">
+  <div class="kicker">No dia a dia</div>
+  <h2>Fale normalmente; o plugin entende</h2>
+  <div class="grid g3">
+    <div class="card"><span class="tag">Retomar</span><h3>"Onde paramos?"</h3><p>Resposta imediata com o estado atual, o foco e os próximos passos, sem abrir nenhum arquivo.</p></div>
+    <div class="card"><span class="tag">Registrar</span><h3>"Registre esta decisão"</h3><p>Cria <code>decisions/NNNN-*.md</code> e adiciona o item em Key Decisions e, se couber, em Do Not.</p></div>
+    <div class="card"><span class="tag">Encerrar</span><h3>"Salve a sessão"</h3><p>Escreve o resumo do dia, atualiza o Current State e comita o vault.</p></div>
+  </div>
+  <div class="card" style="margin-top:20px">
+    <h3>Idioma e formato</h3>
+    <p>O plugin é em inglês. As notas são escritas no idioma da conversa, com datas no formato <code>dd-mm-yyyy</code>. As notas criadas pelo Claude seguem os templates: spec, plan, process, decision, bug, retro e session.</p>
+  </div>
+  <div class="foot"><span>Obsidian Memory</span><span>08</span></div>
+</section>
+
+<!-- 9 · Benchmark medido -->
+<section class="slide">
+  <div class="kicker">Benchmark · medido</div>
+  <h2>"Onde paramos?" com o plugin, em projetos reais</h2>
+  <div class="grid g3" style="margin-bottom:26px">
+    <div class="card stat"><div class="big ok">0</div><p>ferramentas usadas<br><span class="muted">nenhum arquivo aberto para responder</span></p></div>
+    <div class="card stat"><div class="big ok">0</div><p>tokens de leitura adicionados<br><span class="muted">o contexto já chega pronto na sessão</span></p></div>
+    <div class="card stat"><div class="big ok">~6 s</div><p>até a resposta completa<br><span class="muted">em uma única chamada ao modelo</span></p></div>
+  </div>
+  <table>
+    <tr><th>Projeto</th><th>Chamadas ao modelo</th><th>Ferramentas</th><th>Contexto antes → depois da resposta</th><th>Tempo</th></tr>
+    <tr><td>Projeto de teste (<code>teste-vault</code>)</td><td>1</td><td class="ok">0</td><td>52.937 → 52.937 tokens</td><td>7,0 s</td></tr>
+    <tr><td>Este plugin (<code>obsidian-memory-plugin</code>)</td><td>1</td><td class="ok">0</td><td>80.667 → 80.667 tokens</td><td>5,7 s</td></tr>
+  </table>
+  <p class="note">Fonte: logs de uso do Claude Code (campo <code>usage</code> de cada chamada), sessões novas abertas com a pergunta "onde paramos?". O contexto inclui o prompt de sistema e as ferramentas configuradas em cada máquina; o que importa é que ele não cresce: a resposta sai do que o plugin já injetou.</p>
+  <div class="foot"><span>Obsidian Memory</span><span>09</span></div>
+</section>
+
+<!-- 10 · Benchmark estimado -->
+<section class="slide tight">
+  <div class="kicker">Benchmark · estimativa</div>
+  <h2>Retomar um projeto: sem memória × com o plugin</h2>
+  <div class="grid g3" style="margin-bottom:22px">
+    <div class="card stat"><div class="big ok">−82%</div><p>tokens na janela de contexto para se orientar<br><span class="muted">~19.500 → ~3.500</span></p></div>
+    <div class="card stat"><div class="big ok">−90%</div><p>tokens de entrada processados na retomada<br><span class="muted">~560 mil → ~57 mil</span></p></div>
+    <div class="card stat"><div class="big ok">0</div><p>ferramentas para responder "onde paramos?"<br><span class="muted">contra ~8 leituras de arquivos</span></p></div>
+  </div>
+  <table>
+    <tr><th>Para se orientar, o agente precisa de</th><th>Sem memória</th><th>Com Obsidian Memory</th></tr>
+    <tr><td>Saber o que é o projeto e a stack</td><td>README + manifestos: ~2.200 tokens</td><td rowspan="3" style="vertical-align:middle">CLAUDE.md (~1.600) + último resumo (~400 a 900) + fim da conversa (até ~1.250): <b class="ok">~3.500 tokens</b>, já no contexto</td></tr>
+    <tr><td>Entender o código e onde parou</td><td>Script principal, skill, CHANGELOG, git log: ~17.300 tokens</td></tr>
+    <tr><td>Saber o que já foi decidido e por quê</td><td><span class="bad">Não está no código:</span> você explica de novo</td></tr>
+  </table>
+  <p class="note" style="margin-top:14px">Base: tamanhos reais deste repositório (74 KB de código e docs; vault de 6,5 KB), considerando ~4 caracteres por token. Sem memória: ~8 leituras em ~9 chamadas, sobre uma base de ~53 mil tokens (prompt de sistema e ferramentas) que cresce a cada leitura. Os números variam com o tamanho do projeto: quanto maior o código, maior a economia.</p>
+  <div class="foot"><span>Obsidian Memory</span><span>10</span></div>
+</section>
+
+<!-- 11 · Projeção -->
+<section class="slide">
+  <div class="kicker">Economia estimada</div>
+  <h2>Quanto isso soma em um mês</h2>
+  <div class="grid g2" style="grid-template-columns: 1fr 1.15fr; align-items:start">
+    <div>
+      <p style="margin-bottom:16px">Por retomada de projeto, o plugin evita em média:</p>
+      <ul class="clean">
+        <li><b class="ok">~16 mil tokens</b> a menos ocupando a janela de contexto, durante a sessão inteira</li>
+        <li><b class="ok">~500 mil tokens</b> de entrada a menos processados nas chamadas de orientação</li>
+        <li><b class="ok">~8 chamadas de ferramentas</b> e de 1 a 2 minutos de espera</li>
+      </ul>
+      <p class="note" style="margin-top:18px">Grande parte da entrada reprocessada vem do cache de prompt, que custa menos, mas conta para os limites de uso do seu plano.</p>
+    </div>
+    <table>
+      <tr><th>Retomadas por mês</th><th>Janela de contexto</th><th>Entrada processada</th></tr>
+      <tr><td>10 <span class="muted">(1 projeto, meio período)</span></td><td>~160 mil</td><td class="ok"><b>~5 milhões</b></td></tr>
+      <tr><td>20 <span class="muted">(1 projeto, todo dia)</span></td><td>~320 mil</td><td class="ok"><b>~10 milhões</b></td></tr>
+      <tr><td>60 <span class="muted">(3 projetos, todo dia)</span></td><td>~960 mil</td><td class="ok"><b>~30 milhões</b></td></tr>
+    </table>
+  </div>
+  <p class="note">Fórmula: economia ≈ retomadas × (tokens de orientação evitados). Não entram na conta as retomadas depois de uma compactação nem o tempo gasto explicando o projeto de novo, e os dois aumentam a economia.</p>
+  <div class="foot"><span>Obsidian Memory</span><span>11</span></div>
+</section>
+
+<!-- 12 · Sem perda de contexto -->
+<section class="slide">
+  <div class="kicker">Continuidade</div>
+  <h2>O contexto deixa de se perder</h2>
+  <div class="grid g2">
+    <div class="card">
+      <span class="tag rose">Sem o plugin</span>
+      <ul class="clean">
+        <li>A compactação troca a conversa por um resumo curto</li>
+        <li>Ao fechar a sessão, só fica o que está no código</li>
+        <li>Motivos de decisões e próximos passos somem</li>
+        <li>Outra sessão ou outro modelo começa do zero</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="tag mint">Com o plugin</span>
+      <ul class="clean">
+        <li>Antes de compactar, a conversa inteira é arquivada em <code>daily/</code></li>
+        <li>Depois da compactação, o <code>CLAUDE.md</code> volta ao contexto e o Claude registra o que foi feito</li>
+        <li>Decisões viram ADRs, e a seção Do Not bloqueia retrocessos</li>
+        <li>Qualquer modelo que leia o vault sabe onde o trabalho parou</li>
+      </ul>
+    </div>
+  </div>
+  <p class="lead" style="font-size:21px;margin-top:26px">A memória é do <b>projeto</b>, não da conversa: fica no disco, em Markdown, e o agente a consulta sempre que precisa.</p>
+  <div class="foot"><span>Obsidian Memory</span><span>12</span></div>
+</section>
+
+<!-- 13 · Comparação -->
+<section class="slide">
+  <div class="kicker">Vantagens</div>
+  <h2>Comparado às alternativas</h2>
+  <table>
+    <tr><th></th><th>Sem memória</th><th>CLAUDE.md escrito à mão</th><th>Obsidian Memory</th></tr>
+    <tr><td>Contexto do projeto no início</td><td class="bad">Não</td><td class="ok">Sim</td><td class="ok">Sim</td></tr>
+    <tr><td>Resumo da última sessão</td><td class="bad">Não</td><td class="bad">Não</td><td class="ok">Sim, injetado automaticamente</td></tr>
+    <tr><td>Conversas arquivadas</td><td class="bad">Não</td><td class="bad">Não</td><td class="ok">Sim, na compactação e no fim</td></tr>
+    <tr><td>Estado atual sempre atualizado</td><td class="bad">Não</td><td class="muted">Só se você lembrar</td><td class="ok">Sim, a cada save</td></tr>
+    <tr><td>Decisões com o porquê (ADRs)</td><td class="bad">Não</td><td class="muted">Manual</td><td class="ok">Sim, com templates</td></tr>
+    <tr><td>Histórico versionado</td><td class="bad">Não</td><td class="muted">Com o resto do código</td><td class="ok">Commits só do vault (opcional)</td></tr>
+    <tr><td>Navegação visual</td><td class="bad">Não</td><td class="bad">Não</td><td class="ok">Obsidian (opcional)</td></tr>
+  </table>
+  <div class="foot"><span>Obsidian Memory</span><span>13</span></div>
+</section>
+
+<!-- 14 · Garantias -->
+<section class="slide">
+  <div class="kicker">Segurança</div>
+  <h2>Garantias do plugin</h2>
+  <div class="grid g2">
+    <div class="card"><h3>Seu código fica intocado</h3><p>Os commits incluem só <code>obsidian-vault/</code>. O que você deixou no stage não é mexido, e nada é enviado com push.</p></div>
+    <div class="card"><h3>Segredos nunca entram no histórico</h3><p>Antes de cada commit, o plugin procura chaves e tokens. Se achar algum, não comita e avisa na próxima sessão.</p></div>
+    <div class="card"><h3>Nada acontece sem você pedir</h3><p>Nenhum vault é criado sem <code>init</code>. Instalar programas ou reiniciar o Obsidian sempre pede a sua aprovação.</p></div>
+    <div class="card"><h3>Conversas ficam fora do git</h3><p>Transcrições e snapshots de memória ficam só no disco. O vault nunca é criado na pasta pessoal, em Downloads ou em Documentos.</p></div>
+  </div>
+  <div class="foot"><span>Obsidian Memory</span><span>14</span></div>
+</section>
+
+<!-- Open source -->
+<section class="slide tight">
+  <div class="kicker">Open source</div>
+  <h2>Código aberto, local e sem dependência de serviço</h2>
+  <div class="grid g2" style="grid-template-columns: 1.1fr 1fr; align-items:start">
+    <div class="grid" style="gap:12px">
+      <div class="card"><span class="tag mint">Licença MIT</span><h3>Livre para usar, adaptar e redistribuir</h3><p>Uso pessoal ou comercial. Todo o código está no GitHub para você ler antes de instalar.</p></div>
+      <div class="card"><span class="tag mint">100% local</span><h3>Sua memória fica com você</h3><p>Sem servidor, sem conta e sem telemetria. O vault é Markdown no seu disco, e o plugin não envia nada para lugar nenhum.</p></div>
+      <div class="card"><span class="tag mint">Sem dependências</span><h3>Simples de auditar</h3><p>Um script em Python com a biblioteca padrão, um lançador bash e os hooks. Nada de pacotes externos.</p></div>
+    </div>
+    <div class="card" style="background:var(--panel-2)">
+      <h3 style="margin-bottom:14px">Contribua</h3>
+<pre style="font-size:15px">github.com/marcuswmc/
+  obsidian-memory-plugin</pre>
+      <ul class="clean" style="margin-top:18px">
+        <li>Abra uma issue com bugs ou ideias</li>
+        <li>Envie um pull request com melhorias</li>
+        <li>Adapte os templates ao seu jeito de trabalhar</li>
+        <li>Deixe uma estrela para ajudar o projeto a crescer</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><span>Obsidian Memory</span><span>15</span></div>
+</section>
+
+<!-- 15 · Fechamento -->
+<section class="slide cover">
+  <div class="kicker">Comece agora</div>
+  <h1 style="font-size:60px">Retome qualquer projeto<br>com uma pergunta.</h1>
+<pre style="margin-top:36px;max-width:860px"><span class="p">/plugin</span> marketplace add marcuswmc/obsidian-memory-plugin
+<span class="p">/plugin</span> install obsidian-memory@obsidian-memory
+<span class="p">/obsidian-memory:vault</span> init</pre>
+  <p class="lead" style="margin-top:28px;font-size:20px">Open source e gratuito · <span class="hl">github.com/marcuswmc/obsidian-memory-plugin</span> · Licença MIT</p>
+  <div class="foot"><span>Obsidian Memory</span><span>16</span></div>
+</section>
+
+</body>
+</html>
