@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """obsidian-memory: per-project Obsidian vault as extended memory for Claude Code.
 
-Each project gets <project-root>/.obsidian-vault/:
+Each project gets <project-root>/obsidian-vault/ (visible; older vaults in .obsidian-vault/ are renamed):
   CLAUDE.md          AI context file (Project, Tech Stack, Current State, Key Decisions, File Map, Do Not)
   _index.md          generated index of every note
   00-inbox.md        quick captures
@@ -9,7 +9,7 @@ Each project gets <project-root>/.obsidian-vault/:
   daily/<dd-mm-yyyy>/transcript-HHhMM-<id>.md     raw transcript (hooks; not in git)
   daily/<dd-mm-yyyy>/memory/*.md                  snapshot of Claude's auto-memory (not in git)
   specs/ plans/ processes/ decisions/ bugs/ retro/
-  templates/         note templates (Obsidian Templates core plugin + Claude)
+  templates/         note templates for Obsidian (only when Obsidian is on; Claude falls back to the plugin's)
   .obsidian/         pre-configured Obsidian settings
 
 Project root = nearest ancestor of cwd that already has a vault, else the git top-level, else cwd.
@@ -17,14 +17,15 @@ Project root = nearest ancestor of cwd that already has a vault, else the git to
 Subcommands:
   info    [--cwd DIR]                          paths as JSON (creates nothing)
   status  [--cwd DIR]                          human-readable status (always exits 0)
-  init    [--cwd DIR] [--name N] [--no-git] [--no-obsidian]
-                                               create/repair vault, git init if needed, open in Obsidian
-  save    [--cwd DIR] [-m MSG]                 regenerate index and commit the vault
+  init    [--cwd DIR] [--name N] [--no-git|--git] [--no-obsidian|--obsidian]
+                                               create/repair the vault; git and Obsidian are optional
+                                               (choices saved in obsidian-vault/.obsidian-memory.json)
+  save    [--cwd DIR] [-m MSG]                 regenerate index and commit the vault (if git is on)
   open    [--cwd DIR] [--restart]              register the vault in Obsidian and open it
   index   [--cwd DIR]                          regenerate _index.md
   doctor                                       check requirements (python, git, Obsidian) and how to install
   install git|python|obsidian                  install one requirement (ask the user first!)
-  archive                                      SessionEnd / PreCompact hook (JSON on stdin)
+  archive                                      SessionEnd / PreCompact hook (JSON on stdin; only projects with a vault)
   context                                      SessionStart hook (JSON on stdin)
 """
 import datetime as dt
@@ -42,14 +43,14 @@ from urllib.parse import quote
 
 PLUGIN_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATES_SRC = os.path.join(PLUGIN_ROOT, "templates")
-VAULT_DIR = ".obsidian-vault"
-LEGACY_VAULT_DIRS = ["obsidian-vault"]  # renamed to VAULT_DIR on first touch
+VAULT_DIR = "obsidian-vault"
+LEGACY_VAULT_DIRS = [".obsidian-vault"]  # hidden name used up to 1.4.0; renamed to VAULT_DIR on first touch
 DATE_FMT = "%d-%m-%Y"
 FOLDERS = ["daily", "specs", "plans", "processes", "decisions", "bugs", "retro"]
 HOME = os.path.expanduser("~")
 CONTEXT_LIMIT = 12000
 STATE_FILE = ".state.json"
-COWORK_MARK = "local-agent-mode-sessions"  # Claude Cowork session storage
+SETTINGS_FILE = ".obsidian-memory.json"  # choices made at init (git, obsidian)
 FALLBACK_IDENTITY = ["-c", "user.name=Obsidian Memory", "-c", "user.email=obsidian-memory@localhost"]
 
 REMINDER_RE = re.compile(r"<system-reminder>.*?</system-reminder>", re.S)
@@ -83,7 +84,7 @@ CLAUDE_TEMPLATE = """# Project
 **Last updated:** {today}
 
 ### Working
-- `.obsidian-vault/` created
+- `obsidian-vault/` created
 
 ### Broken / Blocked
 - None
@@ -101,8 +102,8 @@ These are settled. Do not reopen them without a good reason (details in `decisio
 
 ```
 {name}/
-├── CLAUDE.md                 # Imports @.obsidian-vault/CLAUDE.md (native loading)
-├── .obsidian-vault/          # Obsidian knowledge base
+├── CLAUDE.md                 # Imports @obsidian-vault/CLAUDE.md (native loading)
+├── obsidian-vault/           # Obsidian knowledge base
 │   ├── CLAUDE.md             # ← AI context file (you are here)
 │   ├── _index.md             # Generated index of every note
 │   ├── 00-inbox.md           # Unprocessed notes and quick captures
@@ -112,8 +113,7 @@ These are settled. Do not reopen them without a good reason (details in `decisio
 │   ├── processes/            # Processes, runbooks, recurring procedures
 │   ├── decisions/            # Architectural decisions (ADRs)
 │   ├── bugs/                 # Bug reports and investigation notes
-│   ├── retro/                # Retrospectives and lessons learned
-│   └── templates/            # Note templates (Obsidian Templates)
+│   └── retro/                # Retrospectives and lessons learned
 └── _(fill in with the project structure)_
 ```
 
@@ -195,56 +195,40 @@ def run_git_root(cwd):
     return out if code == 0 and out else None
 
 
+def _rewrite(path, old_name):
+    """Point references to old_name/ in a text file (root CLAUDE.md, project .gitignore) at VAULT_DIR/."""
+    if not os.path.exists(path):
+        return
+    with uopen(path) as f:
+        txt = f.read()
+    new = re.sub(r"(?<![.\w-])%s(?=/|$)" % re.escape(old_name), VAULT_DIR, txt, flags=re.M)
+    if new != txt:
+        with uopen(path, "w") as f:
+            f.write(new)
+
+
 def migrate_legacy(root):
-    """Rename an old non-hidden vault to VAULT_DIR and fix the root @import."""
+    """Rename an old vault folder to VAULT_DIR and fix what pointed at it."""
     new = os.path.join(root, VAULT_DIR)
     for old_name in LEGACY_VAULT_DIRS:
         old = os.path.join(root, old_name)
         if os.path.isdir(old) and not os.path.exists(new):
             os.rename(old, new)
-            rc = os.path.join(root, "CLAUDE.md")
-            if os.path.exists(rc):
-                with uopen(rc) as f:
-                    txt = f.read()
-                txt = re.sub(r"(?<![.\w-])%s/" % re.escape(old_name), VAULT_DIR + "/", txt)
-                with uopen(rc, "w") as f:
-                    f.write(txt)
-
-
-def in_cowork(path):
-    """True when path is inside a Claude Cowork session folder (its cwd is <session>/outputs)."""
-    return COWORK_MARK in os.path.realpath(path).split(os.sep)
-
-
-def cowork_folders(cwd):
-    """Folders the user selected for this Cowork session, read from the session's <local_id>.json."""
-    d = os.path.realpath(cwd)
-    while os.path.dirname(d) != d:
-        meta = d + ".json"
-        if os.path.basename(d).startswith("local_") and os.path.isfile(meta):
-            out = []
-            for f in read_json(meta, {}).get("userSelectedFolders") or []:
-                p = f if isinstance(f, str) else (f.get("path") or f.get("hostPath") or "") if isinstance(f, dict) else ""
-                if p and os.path.isdir(p):
-                    out.append(p)
-            return out
-        d = os.path.dirname(d)
-    return []
+            _rewrite(os.path.join(root, "CLAUDE.md"), old_name)   # @import
+            _rewrite(os.path.join(new, "CLAUDE.md"), old_name)    # paths mentioned in the context file
+            _rewrite(os.path.join(root, ".gitignore"), old_name)  # vault kept out of git
+            cfgp = obsidian_config_path()                         # Obsidian registration
+            cfg = read_json(cfgp, {})
+            real_old = os.path.normcase(os.path.realpath(old))
+            for meta in (cfg.get("vaults") or {}).values():
+                if os.path.normcase(meta.get("path", "")) == real_old:
+                    meta["path"] = os.path.realpath(new)
+                    write_json(cfgp, cfg)
+                    break
 
 
 def project_root(cwd=None):
     cwd = os.path.realpath(os.path.abspath(cwd or os.getcwd()))
-    if in_cowork(cwd):
-        # Cowork runs in its own outputs folder; the project is a folder the user selected.
-        roots = [find_root(f) for f in cowork_folders(cwd)]
-        with_vault = [r for r in roots if os.path.isfile(os.path.join(r, VAULT_DIR, "CLAUDE.md"))]
-        usable = with_vault or [r for r in roots if not excluded(r)]
-        return usable[0] if usable else cwd
-    return find_root(cwd)
-
-
-def find_root(cwd):
-    cwd = os.path.realpath(os.path.abspath(cwd))
     d = cwd
     while True:
         for name in [VAULT_DIR] + LEGACY_VAULT_DIRS:
@@ -266,8 +250,6 @@ def excluded(root):
         os.path.join(HOME, "Downloads"), os.path.join(HOME, "Desktop"), os.path.join(HOME, "Documents"))}
     if real in bad or os.path.dirname(real) == real:  # drive root (C:\) or /
         return True
-    if in_cowork(real):  # Cowork's internal session folders
-        return True
     prefixes = [os.path.join(HOME, ".claude"), tempfile.gettempdir(), "/tmp", "/private/tmp"]
     return any(real.startswith(os.path.normcase(os.path.realpath(p)) + os.sep) for p in prefixes)
 
@@ -281,7 +263,8 @@ def paths(root):
         "vault": v,
         "claude_md": os.path.join(v, "CLAUDE.md"),
         "vault_exists": os.path.isfile(os.path.join(v, "CLAUDE.md")),
-        "templates": os.path.join(v, "templates"),
+        # the vault's own templates (created with Obsidian, may be customized), else the plugin's
+        "templates": os.path.join(v, "templates") if os.path.isdir(os.path.join(v, "templates")) else TEMPLATES_SRC,
         "today_dir": os.path.join(v, "daily", now.strftime(DATE_FMT)),
         "today": now.strftime(DATE_FMT),
         "session_suffix": now.strftime("%Hh%M"),
@@ -296,6 +279,19 @@ def save_state(v, **kw):
     s = load_state(v)
     s.update(kw)
     write_json(os.path.join(v, STATE_FILE), s)
+
+
+def load_settings(v):
+    """Choices made at init. Missing keys keep the behavior of older vaults (git and Obsidian on)."""
+    s = read_json(os.path.join(v, SETTINGS_FILE), {})
+    return {"git": s.get("git", True), "obsidian": s.get("obsidian", True)}
+
+
+def save_settings(v, **kw):
+    p = os.path.join(v, SETTINGS_FILE)
+    s = read_json(p, {})
+    s.update(kw)
+    write_json(p, s)
 
 
 def has_root_import(root):
@@ -350,7 +346,7 @@ def ensure_templates(v):
                 shutil.copy2(os.path.join(TEMPLATES_SRC, n), dst)
 
 
-def init_vault(root, name=None):
+def init_vault(root, name=None, obsidian=True):
     v = os.path.join(root, VAULT_DIR)
     ensure_root_import(root)
     for f in FOLDERS:
@@ -368,16 +364,21 @@ def init_vault(root, name=None):
         with uopen(inbox, "w") as f:
             f.write("# Inbox\n\nQuick captures. Move them to specs/, plans/, decisions/ or bugs/ when it makes sense.\n\n")
     ensure_gitignore(v)
-    ensure_obsidian_config(v)
-    ensure_templates(v)
+    if obsidian:  # Obsidian's settings and its Templates folder only when the user uses Obsidian
+        ensure_obsidian_config(v)
+        ensure_templates(v)
     build_index(v)
     return v
 
 
 # ---------------------------------------------------------------- git
 
+def has_git():
+    return shutil.which("git") is not None
+
+
 def is_git(root):
-    return run_git_root(root) is not None
+    return has_git() and run_git_root(root) is not None
 
 
 def git_identity(root):
@@ -403,12 +404,23 @@ def scan_secrets(root, pathspecs):
 def git_commit(root, message, extra_paths=None):
     """Commit only the vault (plus extra_paths); never touches other staged work."""
     v = os.path.join(root, VAULT_DIR)
+    if not load_settings(v)["git"]:
+        return {"git": "disabled"}  # the user chose not to version the vault
+    if not has_git():
+        return {"git": "not-installed"}
     if not is_git(root):
         return {"git": "no-repository"}
     if sh(["git", "-C", root, "check-ignore", "-q", v])[0] == 0:
         return {"git": "vault-ignored-by-project"}  # the project chose to keep its vault out of git
     ensure_gitignore(v)  # keeps older vaults up to date (e.g. .obsidian/plugins/)
     specs = [v] + [p for p in (extra_paths or []) if os.path.exists(p)]
+    for old_name in LEGACY_VAULT_DIRS:  # after a rename, commit the old path's removal too
+        old = os.path.join(root, old_name)
+        if not os.path.exists(old) and sh(["git", "-C", root, "ls-files", "--", old])[1]:
+            specs.append(old)
+            root_md = os.path.join(root, "CLAUDE.md")  # its @import was rewritten by the rename
+            if os.path.exists(root_md) and root_md not in specs:
+                specs.append(root_md)
     code, _, err = sh(["git", "-C", root, "add", "-A", "--"] + specs)
     if code != 0:
         return {"git": "error", "detail": err}
@@ -430,12 +442,29 @@ def git_commit(root, message, extra_paths=None):
 
 
 def git_init(root):
+    if not has_git():
+        return "git-not-installed"
     if is_git(root):
         return "existing"
     if excluded(root):
         return "skipped-excluded-folder"
     code, _, err = sh(["git", "init", "-q", root])
     return "initialized" if code == 0 else "error: " + err
+
+
+def ignore_vault_in_project(root):
+    """Keep the vault out of the project's git (the user opted out of versioning it)."""
+    if sh(["git", "-C", root, "check-ignore", "-q", os.path.join(root, VAULT_DIR)])[0] == 0:
+        return "already-ignored"
+    p = os.path.join(root, ".gitignore")
+    existing = ""
+    if os.path.exists(p):
+        with uopen(p) as f:
+            existing = f.read()
+    with uopen(p, "w") as f:
+        f.write((existing.rstrip() + "\n\n" if existing.strip() else "")
+                + "# obsidian-memory: the vault is kept out of git (chosen at init)\n%s/\n" % VAULT_DIR)
+    return "added"
 
 
 # ---------------------------------------------------------------- obsidian
@@ -560,6 +589,8 @@ def cmd_open(root, restart=False):
     v = os.path.join(root, VAULT_DIR)
     if not os.path.isfile(os.path.join(v, "CLAUDE.md")):
         return {"obsidian": "no-vault", "message": "Run init first."}
+    ensure_obsidian_config(v)
+    ensure_templates(v)
     if not obsidian_installed():
         opened = open_download_page()
         return {"obsidian": "not-installed", "download_page_opened": opened, "url": OBSIDIAN_DOWNLOAD,
@@ -665,10 +696,12 @@ def cmd_install(item):
     if not plan:
         return {"error": "unknown item: %s (use git, python or obsidian)" % item}
     if not plan["cmd"] or not plan["auto"]:
-        if item == "obsidian":
-            open_download_page()
+        opened = False
+        if not plan["cmd"] or item == "obsidian":  # no package manager: official installer / download page
+            opened = open_url(plan["manual"])[0]
         return {"installed": False, "reason": "needs manual action (sudo, password or no package manager)",
-                "command_for_user": " ".join(plan["cmd"]) if plan["cmd"] else None, "manual": plan["manual"]}
+                "command_for_user": " ".join(plan["cmd"]) if plan["cmd"] else None, "manual": plan["manual"],
+                "download_page_opened": opened}
     code, out, err = sh(plan["cmd"], timeout=900)
     return {"installed": code == 0, "command": " ".join(plan["cmd"]), "output": (out or err)[-1500:],
             "note": "Reopen the terminal/Claude Code if the new command isn't found." if code == 0 else None}
@@ -683,8 +716,31 @@ def local_time(ts):
         return dt.datetime.now().astimezone()
 
 
+# Commands that say nothing about the work; a session with only these isn't archived.
+TRIVIAL_COMMANDS = {"/exit", "/quit", "/clear", "/resume", "/config", "/help", "/status", "/cost", "/model",
+                    "/login", "/logout", "/doctor", "/compact", "/context", "/permissions", "/hooks", "/plugin"}
+
+
 def clean_text(s):
-    return TAG_BLOCK_RE.sub("", REMINDER_RE.sub("", s)).strip()
+    """Plain text of a message; a slash command becomes `/name args` so command-only sessions still count."""
+    s = REMINDER_RE.sub("", s)
+    cmd = ""
+    m = re.search(r"<command-name>(.*?)</command-name>", s, re.S)
+    if m and m.group(1).strip() not in TRIVIAL_COMMANDS:
+        a = re.search(r"<command-args>(.*?)</command-args>", s, re.S)
+        args = a.group(1).strip() if a else ""
+        cmd = "`%s%s`" % (m.group(1).strip(), " " + args if args else "")
+    rest = TAG_BLOCK_RE.sub("", s).strip()
+    return "\n\n".join(x for x in (cmd, rest) if x)
+
+
+def answer_text(entry):
+    """The user's answers to a question tool (AskUserQuestion); other tool results are skipped."""
+    r = entry.get("toolUseResult")
+    answers = r.get("answers") if isinstance(r, dict) else None
+    if not isinstance(answers, dict):
+        return ""
+    return "; ".join("%s → %s" % (q, a) for q, a in answers.items())[:600]
 
 
 def render_transcript(path):
@@ -710,6 +766,10 @@ def render_transcript(path):
                     t = clean_text(b.get("text", ""))
                     if t:
                         out.append(t)
+                elif bt == "tool_result" and role == "user":
+                    t = answer_text(e)
+                    if t:
+                        out.append("> 💬 %s" % t)
                 elif bt == "tool_use" and role == "assistant":
                     inp = b.get("input") or {}
                     hint = inp.get("description") or inp.get("file_path") or inp.get("command") or inp.get("skill") or ""
@@ -735,12 +795,12 @@ def cmd_archive():
     if not tpath or not os.path.exists(tpath):
         return
     root = project_root(cwd)
-    if excluded(root) and not os.path.isfile(os.path.join(root, VAULT_DIR, "CLAUDE.md")):
-        return
+    if not os.path.isfile(os.path.join(root, VAULT_DIR, "CLAUDE.md")):
+        return  # memory is opt-in: only projects that ran init get archived
     start, body, n_user = render_transcript(tpath)
     if n_user == 0:
         return
-    v = init_vault(root)
+    v = init_vault(root, obsidian=load_settings(os.path.join(root, VAULT_DIR))["obsidian"])
     day = start.strftime(DATE_FMT)
     ddir = os.path.join(v, "daily", day)
     os.makedirs(ddir, exist_ok=True)
@@ -830,50 +890,86 @@ def alerts(v):
             "Tell the user, remove the secret and run save." % (b.get("when"), items))
 
 
+def latest_transcript(v):
+    """Newest archived transcript (raw, written by the hooks), or None."""
+    best = None
+    ddir = os.path.join(v, "daily")
+    if os.path.isdir(ddir):
+        for d in os.listdir(ddir):
+            sub = os.path.join(ddir, d)
+            if os.path.isdir(sub):
+                for n in os.listdir(sub):
+                    if n.startswith("transcript-") and n.endswith(".md"):
+                        f = os.path.join(sub, n)
+                        if best is None or os.path.getmtime(f) > os.path.getmtime(best):
+                            best = f
+    return best
+
+
+def transcript_tail(p, limit):
+    """The end of a transcript, starting at a message boundary."""
+    with uopen(p) as f:
+        t = f.read()
+    if len(t) <= limit:
+        return t
+    t = t[-limit:]
+    i = t.find("\n### ")
+    return "…\n" + (t[i + 1:] if i >= 0 else t)
+
+
 def cmd_context():
     try:
         data = json.load(sys.stdin)
     except ValueError:
         data = {}
     source = data.get("source", "")
-    cwd = data.get("cwd") or os.getcwd()
-    cowork = in_cowork(cwd)
-    p = paths(project_root(cwd))
-    if cowork and in_cowork(p["project_root"]):
-        ctx = ("obsidian-memory: no project folder is selected in this Cowork session, so project memory is off. "
-               "If the user wants it, ask them to add the project folder to the session.")
-    elif p["vault_exists"]:
-        ctx = "This project has an Obsidian vault at %s (project memory). Use the obsidian-memory plugin to read and write it." % p["vault"]
-        if cowork:
-            ctx += " Project folder (selected in Cowork): %s" % p["project_root"]
-        # Cowork doesn't load the project's CLAUDE.md, so the @import can't be relied on there.
-        if has_root_import(p["project_root"]) and source != "compact" and not cowork:
+    p = paths(project_root(data.get("cwd")))
+    if p["vault_exists"]:
+        v = p["vault"]
+        last = latest_session(v)
+        tr = latest_transcript(v)
+        # A raw transcript newer than the last summary means that session ended without a summary.
+        if tr and last and os.path.getmtime(tr) <= os.path.getmtime(last):
+            tr = None
+        history = []
+        if last:
+            history.append("\n\n=== Last session summary: %s ===\n%s" % (last, read_capped(last, 6000)))
+        if tr:
+            history.append("\n\n=== End of the latest conversation, not summarized yet: %s ===\n%s"
+                           % (tr, transcript_tail(tr, 5000)))
+        ctx = ("This project has an Obsidian vault at %s (project memory). Its CLAUDE.md is already in your context%s. "
+               "Use this to resume, and to answer questions such as \"where did we leave off?\", without reading "
+               "the vault with tools. Use the obsidian-memory plugin to write to the vault."
+               % (v, ", and so is what happened last (below)" if history else "; there is no session history yet"))
+        if has_root_import(p["project_root"]) and source != "compact":
             ctx += "\n(%s is already loaded via @import in the root CLAUDE.md.)" % p["claude_md"]
         else:
             ctx += "\n\n=== %s ===\n%s" % (p["claude_md"], read_capped(p["claude_md"], CONTEXT_LIMIT))
-        last = latest_session(p["vault"])
-        if last:
-            ctx += "\n\n=== Last session: %s ===\n%s" % (last, read_capped(last, 6000))
+        ctx += "".join(history)
+        if tr:
+            ctx += ("\n\nThe latest conversation has no summary. When you save this session, cover it too.")
         if source == "compact":
             ctx += ("\n\nThe conversation was just compacted (the full transcript is already archived). "
                     "At the end of your next response, record in today's session-*.md and in Current State what was "
                     "done before the compaction, using the compaction summary.")
-        ctx += alerts(p["vault"])
+        ctx += alerts(v)
     else:
-        ctx = ("This project (%s) has no .obsidian-vault/ yet. It is created automatically at session end; "
-               "to create it now (with git and Obsidian), use the obsidian-memory plugin: init." % p["project_root"])
+        ctx = ("obsidian-memory: this project (%s) has no %s/, so project memory is off. "
+               "Don't bring it up unless the user asks about memory; to turn it on, use /obsidian-memory:vault init."
+               % (p["project_root"], VAULT_DIR))
     print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": ctx}}))
 
 
 def cmd_status(root):
-    if in_cowork(root):
-        print("Cowork session with no project folder selected: project memory is off. "
-              "Ask the user to add the project folder to the session.")
-        return
     p = paths(root)
     v = p["vault"]
     out = ["Project: %s" % root, "Vault: %s (%s)" % (v, "exists" if p["vault_exists"] else "does NOT exist — run init")]
-    if is_git(root):
+    settings = load_settings(v)
+    if p["vault_exists"] and not settings["git"]:
+        out.append("Git: off (chosen at init; the vault is not committed)")
+    elif not has_git():
+        out.append("Git: not installed")
+    elif is_git(root):
         _, branch, _ = sh(["git", "-C", root, "branch", "--show-current"])
         _, last, _ = sh(["git", "-C", root, "log", "-1", "--format=%h %cr — %s", "--", v])
         _, pend, _ = sh(["git", "-C", root, "status", "--porcelain", "--", v])
@@ -881,7 +977,9 @@ def cmd_status(root):
                    % (branch or "?", last or "none", len(pend.splitlines()) if pend else 0))
     else:
         out.append("Git: no repository (init creates one)")
-    if obsidian_installed():
+    if p["vault_exists"] and not settings["obsidian"]:
+        out.append("Obsidian: off (chosen at init; the vault is plain Markdown)")
+    elif obsidian_installed():
         vid = obsidian_vault_id(v) if p["vault_exists"] else None
         out.append("Obsidian: %s · app %s" % ("vault registered" if vid else "vault not registered",
                                               "running" if obsidian_running() else "closed"))
@@ -932,7 +1030,10 @@ def main():
         return
     root = project_root(pop_opt(args, "--cwd"))
     if cmd == "info":
-        emit(paths(root))
+        info = paths(root)
+        if info["vault_exists"]:
+            info["settings"] = load_settings(info["vault"])
+        emit(info)
     elif cmd == "status":
         try:
             cmd_status(root)
@@ -940,21 +1041,35 @@ def main():
             print("status unavailable: %s" % e)
     elif cmd == "init":
         name = pop_opt(args, "--name")
-        no_git = pop_opt(args, "--no-git", False)
-        no_obs = pop_opt(args, "--no-obsidian", False)
+        no_git, want_git = pop_opt(args, "--no-git", False), pop_opt(args, "--git", False)
+        no_obs, want_obs = pop_opt(args, "--no-obsidian", False), pop_opt(args, "--obsidian", False)
         result = {"project_root": root}
         if excluded(root):
-            result["warning"] = ("Excluded folder (home, Downloads, Desktop, Documents, tmp, Cowork session folder). "
-                                 "Use --cwd with the project folder; in Cowork, ask the user to select it.")
+            result["warning"] = "Excluded folder (home, Downloads, Desktop, Documents, tmp). Use --cwd with the project folder."
             emit(result)
             return
-        result["vault_created"] = not os.path.isfile(os.path.join(root, VAULT_DIR, "CLAUDE.md"))
-        result["vault"] = init_vault(root, name)
-        if not no_git:
+        created = not os.path.isfile(os.path.join(root, VAULT_DIR, "CLAUDE.md"))
+        result["vault_created"] = created
+        # A new vault takes the flags as given; an existing one keeps its choices unless a flag changes them.
+        settings = {"git": True, "obsidian": True} if created else load_settings(os.path.join(root, VAULT_DIR))
+        if no_git or want_git:
+            settings["git"] = bool(want_git and not no_git)
+        if no_obs or want_obs:
+            settings["obsidian"] = bool(want_obs and not no_obs)
+        v = result["vault"] = init_vault(root, name, obsidian=settings["obsidian"])
+        save_settings(v, **settings)
+        result["settings"] = settings
+        if settings["git"]:
             result["git_init"] = git_init(root)
             result.update(git_commit(root, "vault: init obsidian-memory", [os.path.join(root, "CLAUDE.md")]))
-        if not no_obs:
+        else:
+            result["git"] = "disabled"
+            if is_git(root):
+                result["project_gitignore"] = ignore_vault_in_project(root)
+        if settings["obsidian"]:
             result.update(cmd_open(root))
+        else:
+            result["obsidian"] = "disabled"
         emit(result)
     elif cmd == "save":
         msg = pop_opt(args, "-m") or "vault: save %s" % dt.datetime.now().strftime("%d-%m-%Y %H:%M")

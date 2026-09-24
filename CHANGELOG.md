@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.4.0 — 24-09-2026
+- The vault folder is now visible: `obsidian-vault/` (was `.obsidian-vault/`, hidden by Finder and file explorers). Existing vaults are renamed on first use, and the root `CLAUDE.md` import, the project's `.gitignore` entry and the Obsidian registration are updated. With git on, the rename is committed.
+- Claude Code only: Cowork support (1.3.0 and 1.3.1) was removed. Cowork will get a separate skill.
+- `init` asks before creating a vault: whether to version it with git and whether to use Obsidian, both optional. With neither, only the vault folder is created. The choices are saved in `obsidian-vault/.obsidian-memory.json` and can be changed with `init --git`, `--no-git`, `--obsidian` or `--no-obsidian`.
+- Declining git in a project that already uses it adds `obsidian-vault/` to the project's `.gitignore`; `save` and the hooks never commit.
+- Installing git or Obsidian uses the system package manager (Homebrew, winget, apt/dnf, flatpak) with the user's approval. Without one, the official installer or download page opens. No package manager is ever installed.
+- A vault is no longer created automatically at session end: projects without a vault are left untouched until `init`.
+- SessionStart tells Claude the vault context is already loaded, so it resumes without reading files. When the latest session ended without a summary, it injects the end of that conversation.
+- Fix: sessions whose only user input was a slash command (such as `init`) or answers to questions were not archived. Commands and answers are now kept in the transcript.
+- `.obsidian/` and `templates/` are only created when Obsidian is on (or when `open` is run). Without them, Claude uses the plugin's own note templates; a vault's `templates/` still takes precedence, so customized templates keep working.
+
 ## 1.3.1 — 23-09-2026
 - Remote Cowork sessions: hooks may not run there and the script may not reach the selected folder. The skill now loads at the start of a session when an attached folder has `.obsidian-vault/` but no vault context was injected, reads `CLAUDE.md` and the latest session with file tools, and saves the session note before the end (committing later if the script can't run).
 

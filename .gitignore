@@ -3,5 +3,6 @@ __pycache__/
 .DS_Store
 
 # Claude's local memory about this repository (personal history; do not publish)
+obsidian-vault/
 .obsidian-vault/
 CLAUDE.md
