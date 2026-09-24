@@ -1,5 +1,8 @@
 # Changelog
 
+## obsidian-memory-cowork 1.0.0 — 24-09-2026
+- New companion plugin for Claude Cowork in `cowork/`, listed in the same marketplace. A single skill resumes from `obsidian-vault/` (CLAUDE.md and the latest session note), records decisions and notes, saves the session and can create a vault without git or Obsidian, using file tools only. It never runs git and steps aside when the Claude Code plugin is active.
+
 ## 1.4.1 — 24-09-2026
 - Fix: migrating from `.obsidian-vault/` left a duplicate `obsidian-vault/` line in a `.gitignore` that listed both names.
 - Fix: migration no longer rewrites the vault's `CLAUDE.md` word by word, which turned notes about the migration itself into contradictions. The next SessionStart tells Claude, once, to update the paths and the migration notes.

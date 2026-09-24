@@ -38,7 +38,24 @@ Use **only one** of the two methods: with both installed, the hooks run twice. T
 
 The hooks ship with the plugin (`hooks/hooks.json`), so there's no need to edit `settings.json`.
 
-> This plugin is for **Claude Code**. Claude Cowork doesn't run it reliably; a separate skill for Cowork is planned.
+> This plugin is for **Claude Code**. For Claude Cowork, use the companion plugin below.
+
+### Claude Cowork
+
+Cowork doesn't run hooks or scripts reliably, so it gets a separate plugin, `obsidian-memory-cowork`, from the same marketplace. It has a single skill that reads and writes the same `obsidian-vault/` with file tools only: no hooks, no Python, no git.
+
+```
+/plugin marketplace add marcuswmc/obsidian-memory-plugin
+/plugin install obsidian-memory-cowork@obsidian-memory
+```
+
+- **Resume:** in a session whose folder has `obsidian-vault/`, Claude loads the skill, reads `CLAUDE.md` and the latest session note, and picks up from there. Ask "where did we leave off?" to check.
+- **Save:** Claude writes the session note as the work goes (Cowork has no session-end hook) and updates Current State. Say "save the session" to wrap up.
+- **Create a vault:** "create the project memory" makes a vault without git or Obsidian. You can turn them on later with `/obsidian-memory:vault init --git --obsidian` in Claude Code.
+- **Commits:** the skill never runs git. If git is on for the vault, the next save or session end in Claude Code commits what Cowork wrote.
+- **Both installed:** the Code tab of the desktop app also loads plugins installed from Cowork. When the main plugin is active, the Cowork skill steps aside.
+
+Without hooks, the skill depends on Claude choosing to load it at the start of the session. If it doesn't, ask "where did we leave off?" or run `/obsidian-memory-cowork:vault`.
 
 ## Getting started
 

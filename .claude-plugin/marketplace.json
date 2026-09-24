@@ -4,7 +4,7 @@
     "name": "Marcus Silva"
   },
   "metadata": {
-    "description": "Marketplace for the Obsidian Memory plugin"
+    "description": "Marketplace for the Obsidian Memory plugins (Claude Code and Cowork)"
   },
   "plugins": [
     {
@@ -12,6 +12,12 @@
       "source": "./",
       "description": "Persistent per-project memory for Claude Code: an Obsidian vault (obsidian-vault/) with a context CLAUDE.md, session history, specs, plans and decisions. Git and Obsidian are optional.",
       "version": "1.4.1"
+    },
+    {
+      "name": "obsidian-memory-cowork",
+      "source": "./cowork",
+      "description": "Persistent per-project memory for Claude Cowork: reads and writes the same obsidian-vault/ used by the Obsidian Memory plugin for Claude Code, with file tools only (no hooks, scripts or git).",
+      "version": "1.0.0"
     }
   ]
 }
